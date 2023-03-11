@@ -1,58 +1,81 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.sensors.Pigeon2;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.controller.Axis;
+import frc.lib.gyro.GenericGyro;
+import frc.lib.gyro.NavXGyro;
 import frc.lib.interpolation.MovingAverageVelocity;
-import frc.lib.logging.LoggableChassisSpeeds;
-import frc.lib.logging.LoggableDouble;
-import frc.lib.logging.LoggableDoubleArray;
-import frc.lib.logging.LoggablePose;
-import frc.lib.loops.Updatable;
+import frc.lib.logging.LoggedReceiver;
+import frc.lib.logging.Logger;
+import frc.lib.math.MathUtils;
 import frc.lib.swerve.SwerveDriveSignal;
 import frc.lib.swerve.SwerveModule;
 import frc.robot.Constants;
 import frc.robot.Constants.SwerveConstants;
-import frc.robot.Constants.TimesliceConstants;
+import frc.robot.commands.FeedForwardCharacterization;
+import frc.robot.commands.FeedForwardCharacterization.FeedForwardCharacterizationData;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+import java.util.stream.DoubleStream;
 
-public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
+public class SwerveDriveSubsystem extends SubsystemBase {
     private final SwerveDrivePoseEstimator swervePoseEstimator;
 
     private Pose2d pose = new Pose2d();
-    private final MovingAverageVelocity velocityEstimator = new MovingAverageVelocity(20);
+    private final MovingAverageVelocity velocityEstimator = new MovingAverageVelocity(3);
     private ChassisSpeeds velocity = new ChassisSpeeds();
+    private ChassisSpeeds previousVelocity = new ChassisSpeeds();
     private SwerveDriveSignal driveSignal = new SwerveDriveSignal();
+
+    private LoggedReceiver pidValueReciever;
+
+    private double levelingMaxSpeed;
+
+    private boolean isLevelingAuto = false;
 
     private SwerveModule[] modules;
 
-    private final Pigeon2 gyro = new Pigeon2(SwerveConstants.PIGEON_PORT);
+    private GenericGyro gyro;
 
-    // Create a PID controller and heading tracker for maintaining desired heading
-    private final PIDController headingController = new PIDController(0.3, 0, 0, TimesliceConstants.CONTROLLER_PERIOD);
-    private Rotation2d desiredHeading = null;
-    private SwerveDriveSignal previousDriveSignal = new SwerveDriveSignal();
+    boolean isCharacterizing = false;
 
-    LoggableDouble gyroLogger = new LoggableDouble("/SwerveDriveSubsystem/Gyro");
-    LoggablePose poseLogger = new LoggablePose("/SwerveDriveSubsystem/Pose", pose, true);
-    LoggableChassisSpeeds velocityLogger = new LoggableChassisSpeeds("/SwerveDriveSubsystem/Velocity");
-    LoggableDoubleArray desiredVelocityLogger = new LoggableDoubleArray("/SwerveDriveSubsystem/Desired Velocity");
-    LoggableDoubleArray wheelAnglesLogger = new LoggableDoubleArray("/SwerveDriveSubsystem/Wheel Angles");
-    LoggableDoubleArray driveTemperatureLogger = new LoggableDoubleArray("/SwerveDriveSubsystem/Drive Temperatures");
-    LoggableDoubleArray angleTemperatureLogger = new LoggableDoubleArray("/SwerveDriveSubsystem/Angle Temperatures");
-    LoggableDoubleArray driveVoltageLogger = new LoggableDoubleArray("/SwerveDriveSubsystem/Drive Voltage");
-    LoggableDoubleArray angleVoltageLogger = new LoggableDoubleArray("/SwerveDriveSubsystem/Angle Voltage");
+    private LoggedReceiver isSecondOrder;
+
+    // PID controller used for auto-leveling
+    // private PIDController tiltController = new PIDController(0.75 / 15, 0, 0.02);
+    private PIDController tiltController = new PIDController(0.75 / 12, 0, 0.02);
+
+    // PID controller used for cardinal command
+    private ProfiledPIDController omegaController =
+            new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(8, 8));
+
+    private double previousTilt = 0;
+    private double tiltRate = 0;
+    private DoubleSupplier maxSpeedSupplier = () -> Constants.SwerveConstants.maxSpeed;
 
     public SwerveDriveSubsystem() {
+        gyro = new NavXGyro();
+
         modules = new SwerveModule[] {
             new SwerveModule(0, Constants.SwerveConstants.Mod0.constants),
             new SwerveModule(1, Constants.SwerveConstants.Mod1.constants),
@@ -61,22 +84,229 @@ public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
         };
 
         // Reset each module using its absolute encoder to avoid having modules fail to align
-        for (SwerveModule module : modules) {
-            module.resetToAbsolute();
-        }
+        calibrateIntegratedEncoders();
 
         // Initialize the swerve drive pose estimator with access to the module positions.
         swervePoseEstimator = new SwerveDrivePoseEstimator(
-                SwerveConstants.swerveKinematics, getGyroRotation(), getModulePositions(), new Pose2d());
+                SwerveConstants.swerveKinematics,
+                getGyroRotation(),
+                getModulePositions(),
+                new Pose2d(),
+                VecBuilder.fill(0.01, 0.01, 0.01),
+                VecBuilder.fill(0.7, 0.7, 0.7)); // might need to bring these back up (was 0.5)
+
+        // Allow us to toggle on second order kinematics
+        isSecondOrder = Logger.tunable("/SwerveDriveSubsystem/isSecondOrder", true);
+        pidValueReciever = Logger.tunable(
+                "/SwerveDriveSubsystem/levelPIDValues",
+                new double[] {0.8 / 15, 0, .01, 8, 0.8}); // P I D stopAngle leveingMaxSpeed
+        // [0.055,0,0.01,10,0.55]\][]
+        // new double[] {0.75 / 15, 0, .02, 8, 0.85}
     }
 
-    public CommandBase driveCommand(Axis forward, Axis strafe, Axis rotation, boolean isFieldOriented) {
+    public Command driveCommand(
+            DoubleSupplier forward, DoubleSupplier strafe, DoubleSupplier rotation, boolean isFieldOriented) {
+        return run(() -> {
+            setVelocity(
+                    new ChassisSpeeds(forward.getAsDouble(), strafe.getAsDouble(), rotation.getAsDouble()),
+                    isFieldOriented);
+        });
+    }
+
+    public Command preciseDriveCommand(
+            DoubleSupplier forward, DoubleSupplier strafe, DoubleSupplier rotation, boolean isFieldOriented) {
+        var speedMultiplier = SwerveConstants.preciseDrivingModeSpeedMultiplier;
+
+        return run(() -> {
+            setVelocity(
+                    new ChassisSpeeds(
+                            speedMultiplier * forward.getAsDouble(),
+                            speedMultiplier * strafe.getAsDouble(),
+                            speedMultiplier * rotation.getAsDouble()),
+                    isFieldOriented);
+        });
+    }
+
+    public Command cardinalCommand(Rotation2d targetAngle, DoubleSupplier forward, DoubleSupplier strafe) {
+        omegaController.setTolerance(Units.degreesToRadians(1));
+        omegaController.enableContinuousInput(-Math.PI, Math.PI);
+
+        return run(() -> {
+            var rotationVelocity = omegaController.calculate(pose.getRotation().getRadians(), targetAngle.getRadians());
+
+            setVelocity(new ChassisSpeeds(forward.getAsDouble(), strafe.getAsDouble(), rotationVelocity), true);
+        });
+    }
+
+    public Command levelChargeStationCommandArlene() {
+        var constraints = new TrapezoidProfile.Constraints(0.4, 0.8);
+        var tiltController = new ProfiledPIDController(0.27, 0, 0.01, constraints);
+
+        // End with no pitch and stationary
+        State goal = new State(0, 0);
+
+        // Four degrees of tolerance
+        tiltController.setTolerance(4, 0.1);
+
+        return run(() -> {
+                    double tilt = getTiltAmountInDegrees();
+
+                    Logger.log("/SwerveDriveSubsystem/Tilt Rate", getTiltRate());
+
+                    // Negative pitch -> drive forward, Positive pitch -> drive backward
+
+                    Translation2d direction = new Translation2d(
+                            getNormalVector3d().getX(), getNormalVector3d().getY());
+
+                    Translation2d finalDirection = direction.times(tiltController.calculate(tilt, goal));
+
+                    ChassisSpeeds velocity = new ChassisSpeeds(finalDirection.getX(), finalDirection.getY(), 0);
+
+                    if (MathUtils.equalsWithinError(0, tilt, 8) || getTiltAmount() < -0.2) lock();
+                    else setVelocity(velocity, false);
+                })
+                .repeatedly();
+    }
+
+    public Command levelChargeStationCommandDestiny() {
+        return run(() -> {
+                    double tilt = getTiltAmountInDegrees();
+
+                    // Negative pitch -> drive forward, Positive pitch -> drive backward
+
+                    Translation2d direction = new Translation2d(
+                            1,
+                            new Rotation2d(
+                                    getNormalVector3d().getX(),
+                                    getNormalVector3d().getY()));
+
+                    double speed = tiltController.calculate(tilt, 0);
+                    if (speed >= levelingMaxSpeed) speed = levelingMaxSpeed;
+
+                    Translation2d finalDirection = direction.times(tiltController.calculate(tilt, 0));
+
+                    ChassisSpeeds velocity = new ChassisSpeeds(finalDirection.getX(), finalDirection.getY(), 0);
+
+                    if (tiltController.atSetpoint()) {
+                        lock();
+                    } else setVelocity(velocity, false);
+                })
+                .beforeStarting(() -> {
+                    isLevelingAuto = true;
+                    var values = pidValueReciever.getDoubleArray();
+                    if (values.length < 5) return;
+                    tiltController.setPID(values[0], values[1], values[2]);
+                    tiltController.setTolerance(values[3]);
+                    levelingMaxSpeed = values[4];
+                })
+                .finallyDo((interrupted) -> {
+                    tiltController.reset();
+                    isLevelingAuto = false;
+                });
+    }
+
+    public boolean isLevelDestiny() {
+        return tiltController.atSetpoint() && isLevelingAuto;
+    }
+
+    public Command levelChargeStationCommandBrooklyn() {
+        // 0.05 is the response time. this prevents the wheels from going all crazy
+        Debouncer isLevelEnough = new Debouncer(0.05, Debouncer.DebounceType.kBoth);
+
+        return run(() -> {
+            double tilt = getTiltAmount();
+
+            Translation2d finalDirection = new Translation2d(
+                            getNormalVector3d().getX(), getNormalVector3d().getY())
+                    .times(0.5); // 0.05 is the max speed
+
+            if (isLevelEnough.calculate(tilt < Math.toRadians(6))) {
+                lock();
+            } else {
+                setVelocity(new ChassisSpeeds(finalDirection.getX(), finalDirection.getY(), 0), false);
+            }
+        });
+    }
+
+    public Command levelChargeStationCommandCatherine() {
+        // 0.05 is the response time. this prevents the wheels from going all crazy
+        Debouncer isFastEnough = new Debouncer(0.05, Debouncer.DebounceType.kBoth);
+
+        BooleanSupplier whenToStop = () -> {
+            return isFastEnough.calculate(getTiltRate() < -15);
+        };
+
         return runEnd(
-                        () -> setVelocity(
-                                new ChassisSpeeds(forward.get(true), strafe.get(true), rotation.get(true)),
-                                isFieldOriented),
-                        this::stop)
-                .withName("Drive");
+                        () -> {
+                            Translation2d finalDirection = new Translation2d(
+                                            getNormalVector3d().getX(),
+                                            getNormalVector3d().getY())
+                                    .times(0.5); // 0.05 is the max speed
+
+                            setVelocity(new ChassisSpeeds(finalDirection.getX(), finalDirection.getY(), 0), false);
+                        },
+                        () -> {
+                            lock();
+                        })
+                .until(whenToStop);
+    }
+
+    public Command characterizeCommand(boolean forwards, boolean isDriveMotors) {
+        Consumer<Double> voltageConsumer = isDriveMotors
+                ? (Double voltage) -> {
+                    for (SwerveModule module : modules) {
+                        module.setDriveCharacterizationVoltage(voltage);
+                    }
+                }
+                : (Double voltage) -> {
+                    for (SwerveModule module : modules) {
+                        module.setAngleCharacterizationVoltage(voltage);
+                    }
+                };
+
+        Supplier<Double> velocitySupplier = isDriveMotors
+                ? () -> {
+                    return DoubleStream.of(
+                                    modules[0].getState().speedMetersPerSecond,
+                                    modules[1].getState().speedMetersPerSecond,
+                                    modules[2].getState().speedMetersPerSecond,
+                                    modules[3].getState().speedMetersPerSecond)
+                            .average()
+                            .getAsDouble();
+                }
+                : () -> {
+                    return DoubleStream.of(
+                                    modules[0].getAngularVelocity(),
+                                    modules[1].getAngularVelocity(),
+                                    modules[2].getAngularVelocity(),
+                                    modules[3].getAngularVelocity())
+                            .average()
+                            .getAsDouble();
+                };
+
+        return new FeedForwardCharacterization(
+                        this,
+                        forwards,
+                        new FeedForwardCharacterizationData("Swerve Drive"),
+                        voltageConsumer,
+                        velocitySupplier)
+                .beforeStarting(() -> isCharacterizing = true)
+                .finallyDo((boolean interrupted) -> isCharacterizing = false);
+    }
+
+    public void switchToBackupGyro() {
+        gyro = new NavXGyro();
+    }
+
+    public void calibrateIntegratedEncoders() {
+        // Reset each module using its absolute encoder
+        for (SwerveModule module : modules) {
+            module.resetToAbsolute();
+        }
+    }
+
+    public void setCustomMaxSpeedSupplier(DoubleSupplier maxSpeedSupplier) {
+        this.maxSpeedSupplier = maxSpeedSupplier;
     }
 
     public Pose2d getPose() {
@@ -92,8 +322,25 @@ public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
         swervePoseEstimator.addVisionMeasurement(pose, timestamp);
     }
 
+    /**
+     * @return The robot relative velocity of the drivetrain
+     */
     public ChassisSpeeds getVelocity() {
         return velocity;
+    }
+
+    public ChassisSpeeds getAcceleration() {
+        return new ChassisSpeeds(
+                velocity.vxMetersPerSecond - previousVelocity.vxMetersPerSecond,
+                velocity.vyMetersPerSecond - previousVelocity.vyMetersPerSecond,
+                velocity.omegaRadiansPerSecond - previousVelocity.omegaRadiansPerSecond);
+    }
+
+    /**
+     * @return The potentially field relative desired velocity of the drivetrain
+     */
+    public ChassisSpeeds getDesiredVelocity() {
+        return (ChassisSpeeds) driveSignal;
     }
 
     public double getVelocityMagnitude() {
@@ -109,11 +356,36 @@ public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
     }
 
     public Rotation2d getGyroRotation() {
-        return Rotation2d.fromDegrees(gyro.getYaw());
+        return gyro.getRotation2d();
     }
 
     public Rotation2d getRotation() {
         return pose.getRotation();
+    }
+
+    public Rotation3d getGyroRotation3d() {
+        return gyro.getRotation3d();
+    }
+
+    public Translation3d getNormalVector3d() {
+        return new Translation3d(0, 0, 1).rotateBy(getGyroRotation3d());
+    }
+
+    /**is in degrees*/
+    public double getTiltAmountInDegrees() {
+        return Math.toDegrees(getTiltAmount());
+    }
+
+    public double getTiltAmount() {
+        return Math.acos(getNormalVector3d().getZ());
+    }
+
+    public double getTiltRate() {
+        return tiltRate;
+    }
+
+    public Rotation2d getTiltDirection() {
+        return new Rotation2d(getNormalVector3d().getX(), getNormalVector3d().getY());
     }
 
     public void setRotation(Rotation2d angle) {
@@ -140,9 +412,14 @@ public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
         driveSignal = new SwerveDriveSignal();
     }
 
-    @Override
+    public void lock() {
+        driveSignal = new SwerveDriveSignal(true);
+    }
+
     public void update() {
         updateOdometry();
+
+        if (isCharacterizing) return;
 
         updateModules(driveSignal);
     }
@@ -151,9 +428,10 @@ public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
         SwerveModuleState[] moduleStates = getModuleStates();
         SwerveModulePosition[] modulePositions = getModulePositions();
 
+        previousVelocity = velocity;
         velocity = Constants.SwerveConstants.swerveKinematics.toChassisSpeeds(moduleStates);
 
-        velocityEstimator.add(velocity);
+        // velocityEstimator.add(velocity);
 
         pose = swervePoseEstimator.update(getGyroRotation(), modulePositions);
     }
@@ -171,34 +449,36 @@ public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
             chassisVelocity = (ChassisSpeeds) driveSignal;
         }
 
-        // Store the current heading as desired if we are no longer turning
-        if (driveSignal.omegaRadiansPerSecond == 0 && previousDriveSignal.omegaRadiansPerSecond != 0) {
-            desiredHeading = getGyroRotation();
-        } else if (driveSignal.omegaRadiansPerSecond != 0) {
-            desiredHeading = null;
-        }
-
-        // Use a PID controller to maintain the current heading (as long as we are in teleop)
-        if (desiredHeading != null && driveSignal.isOpenLoop()) {
-            chassisVelocity.omegaRadiansPerSecond =
-                    -headingController.calculate(getGyroRotation().getDegrees(), desiredHeading.getDegrees());
-        }
-
         SwerveModuleState[] moduleStates =
                 Constants.SwerveConstants.swerveKinematics.toSwerveModuleStates(chassisVelocity);
 
-        setModuleStates(moduleStates, isDriveSignalStopped(driveSignal) ? true : driveSignal.isOpenLoop());
+        if (driveSignal.isLocked()) {
+            // get X for stopping
+            moduleStates = new SwerveModuleState[] {
+                new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
+                new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+                new SwerveModuleState(0, Rotation2d.fromDegrees(-45)),
+                new SwerveModuleState(0, Rotation2d.fromDegrees(45)),
+            };
 
-        // Store the current drive signal for the next loop
-        previousDriveSignal = driveSignal;
+            // Set the angle of each module only
+            for (int i = 0; i < moduleStates.length; i++) {
+                modules[i].setDesiredAngleOnly(moduleStates[i].angle, true);
+            }
+        } else {
+            setModuleStates(moduleStates, isDriveSignalStopped(driveSignal) ? true : driveSignal.isOpenLoop());
+            // setModuleStates(moduleStates, driveSignal.isOpenLoop());
+        }
     }
 
     private void setModuleStates(SwerveModuleState[] desiredStates, boolean isOpenLoop) {
-        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.SwerveConstants.maxSpeed);
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, maxSpeedSupplier.getAsDouble());
 
         for (SwerveModule module : modules) {
-            module.setDesiredState(desiredStates[module.moduleNumber], isOpenLoop);
+            module.setDesiredState(desiredStates[module.moduleNumber], isOpenLoop, isSecondOrder.getBoolean());
         }
+
+        Logger.log("/SwerveDriveSubsystem/Wheel Setpoint", desiredStates[0].speedMetersPerSecond);
     }
 
     private boolean isDriveSignalStopped(SwerveDriveSignal driveSignal) {
@@ -209,23 +489,38 @@ public class SwerveDriveSubsystem extends SubsystemBase implements Updatable {
 
     @Override
     public void periodic() {
-        gyroLogger.set(getGyroRotation().getDegrees());
+        var startTimeMS = Timer.getFPGATimestamp() * 1000;
 
-        poseLogger.set(pose);
-        velocityLogger.set(velocity);
-        desiredVelocityLogger.set(new double[] {
-            driveSignal.vxMetersPerSecond, driveSignal.vyMetersPerSecond, driveSignal.omegaRadiansPerSecond
-        });
+        var tilt = getTiltAmount();
+        tiltRate = (tilt - previousTilt) / 0.02;
+        previousTilt = tilt;
 
-        wheelAnglesLogger.set(new double[] {
-            modules[0].getPosition().angle.getDegrees(),
-            modules[1].getPosition().angle.getDegrees(),
-            modules[2].getPosition().angle.getDegrees(),
-            modules[3].getPosition().angle.getDegrees()
-        });
+        // Comment out to play music
+        update();
 
-        driveTemperatureLogger.set(getDriveTemperatures());
-        angleTemperatureLogger.set(getAngleTemperatures());
+        Logger.log("/SwerveDriveSubsystem/Pose", pose);
+        // Logger.log("/SwerveDriveSubsystem/Velocity", velocity);
+        // Logger.log("/SwerveDriveSubsystem/Desired Velocity", (ChassisSpeeds) driveSignal);
+
+        Logger.log("/SwerveDriveSubsystem/Velocity Magnitude", getVelocityMagnitude());
+
+        Logger.log("/SwerveDriveSubsystem/Wheel Speed", modules[0].getState().speedMetersPerSecond);
+
+        Logger.log("/SwerveDriveSubsystem/Pitch", getGyroRotation3d().getY());
+        Logger.log("/SwerveDriveSubsystem/Roll", getGyroRotation3d().getX());
+        Logger.log("/SwerveDriveSubsystem/Tilt", getTiltAmountInDegrees());
+
+        // Logger.log("/SwerveDriveSubsystem/Wheel Angles", new double[] {
+        //     modules[0].getPosition().angle.getDegrees(),
+        //     modules[1].getPosition().angle.getDegrees(),
+        //     modules[2].getPosition().angle.getDegrees(),
+        //     modules[3].getPosition().angle.getDegrees()
+        // });
+
+        Logger.log("/SwerveDriveSubsystem/Drive Temperatures", getDriveTemperatures());
+        // Logger.log("/SwerveDriveSubsystem/Angle Temperatures", getAngleTemperatures());
+
+        Logger.log("/SwerveDriveSubsystem/LoopDuration", Timer.getFPGATimestamp() * 1000 - startTimeMS);
     }
 
     public SwerveModuleState[] getModuleStates() {

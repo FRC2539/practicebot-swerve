@@ -20,8 +20,14 @@ public class SwerveModule {
     private WPI_CANCoder angleEncoder;
     private double lastAngle;
 
-    SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(
-            Constants.SwerveConstants.driveKS, Constants.SwerveConstants.driveKV, Constants.SwerveConstants.driveKA);
+    SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(
+            Constants.SwerveConstants.calculatedDriveKS,
+            Constants.SwerveConstants.calculatedDriveKV,
+            Constants.SwerveConstants.calculatedDriveKA);
+
+    // Testing a calculation method
+    // SimpleMotorFeedforward angleFeedforward = new SimpleMotorFeedforward(
+    //         Constants.SwerveConstants.angleKS, Constants.SwerveConstants.angleKV, Constants.SwerveConstants.angleKA);
 
     public SwerveModule(int moduleNumber, SwerveModuleConstants moduleConstants) {
         this.moduleNumber = moduleNumber;
@@ -49,6 +55,10 @@ public class SwerveModule {
     }
 
     public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
+        setDesiredState(desiredState, isOpenLoop, false);
+    }
+
+    public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop, boolean isSecondOrder) {
         // Custom optimize command, since default WPILib optimize assumes continuous controller, which CTRE is not
         desiredState = CTREModuleState.optimize(desiredState, getState().angle);
 
@@ -64,17 +74,70 @@ public class SwerveModule {
                     ControlMode.Velocity,
                     velocity,
                     DemandType.ArbitraryFeedForward,
-                    feedforward.calculate(desiredState.speedMetersPerSecond));
+                    driveFeedforward.calculate(desiredState.speedMetersPerSecond));
         }
 
+        // Determine the angle to set the module to
         double angle = (Math.abs(desiredState.speedMetersPerSecond) <= (Constants.SwerveConstants.maxSpeed * 0.01))
                 ? lastAngle
                 : desiredState.angle
                         .getDegrees(); // Prevent rotating module if speed is less then 1%. Prevents Jittering.
 
-        angleMotor.set(
-                ControlMode.Position, Conversions.degreesToFalcon(angle, Constants.SwerveConstants.angleGearRatio));
+        // Account for the velocity of the angle motor if in second order mode
+        if (isSecondOrder && desiredState instanceof SecondOrderSwerveModuleState) {
+            angleMotor.set(
+                    ControlMode.Position,
+                    Conversions.degreesToFalcon(0, Constants.SwerveConstants.angleGearRatio),
+                    DemandType.ArbitraryFeedForward,
+                    ((SecondOrderSwerveModuleState) desiredState).angularVelocityRadiansPerSecond
+                            * Constants.SwerveConstants.calculatedAngleKV);
+        } else {
+            angleMotor.set(
+                    ControlMode.Position, Conversions.degreesToFalcon(angle, Constants.SwerveConstants.angleGearRatio));
+        }
+
         lastAngle = angle;
+    }
+
+    public void setDesiredAngleOnly(Rotation2d desiredAngle, boolean optimized) {
+        // Set the module to face forwards
+        if (optimized) {
+            desiredAngle = CTREModuleState.optimize(new SwerveModuleState(1, desiredAngle), getState().angle).angle;
+        }
+
+        angleMotor.set(
+                ControlMode.Position,
+                Conversions.degreesToFalcon(desiredAngle.getDegrees(), Constants.SwerveConstants.angleGearRatio));
+
+        lastAngle = 0;
+
+        // Stop the motor to bypass the speed check
+        driveMotor.stopMotor();
+    }
+
+    public void setDriveCharacterizationVoltage(double voltage) {
+        // Set the module to face forwards
+        angleMotor.set(ControlMode.Position, Conversions.degreesToFalcon(0, Constants.SwerveConstants.angleGearRatio));
+
+        lastAngle = 0;
+
+        // Set the drive motor to the specified voltage
+        driveMotor.set(ControlMode.PercentOutput, voltage / Constants.GlobalConstants.targetVoltage);
+    }
+
+    public void setAngleCharacterizationVoltage(double voltage) {
+        // Set the module to face forwards
+        angleMotor.set(ControlMode.PercentOutput, voltage / Constants.GlobalConstants.targetVoltage);
+
+        lastAngle = 0;
+
+        // Set the drive motor to just enough to overcome static friction
+        driveMotor.set(ControlMode.PercentOutput, 1.1 * 0);
+    }
+
+    public void disableMotors() {
+        driveMotor.stopMotor();
+        angleMotor.stopMotor();
     }
 
     public void resetToAbsolute() {
@@ -103,11 +166,20 @@ public class SwerveModule {
         driveMotor.setNeutralMode(Constants.SwerveConstants.driveNeutralMode);
         driveMotor.setSelectedSensorPosition(0);
         driveMotor.enableVoltageCompensation(true);
+        driveMotor.setSensorPhase(Constants.SwerveConstants.driveEncoderInvert);
         driveMotor.setInverted(Constants.SwerveConstants.driveMotorInvert);
     }
 
     public Rotation2d getCanCoder() {
         return Rotation2d.fromDegrees(angleEncoder.getAbsolutePosition());
+    }
+
+    public WPI_TalonFX getDriveMotor() {
+        return driveMotor;
+    }
+
+    public WPI_TalonFX getAngleMotor() {
+        return angleMotor;
     }
 
     public SwerveModuleState getState() {
@@ -118,6 +190,13 @@ public class SwerveModule {
         Rotation2d angle = Rotation2d.fromDegrees(Conversions.falconToDegrees(
                 angleMotor.getSelectedSensorPosition(), Constants.SwerveConstants.angleGearRatio));
         return new SwerveModuleState(velocity, angle);
+    }
+
+    public double getAngularVelocity() {
+        return Conversions.falconToRPM(angleMotor.getSelectedSensorVelocity(), Constants.SwerveConstants.angleGearRatio)
+                / 60
+                * 2
+                * Math.PI;
     }
 
     public SwerveModulePosition getPosition() {
