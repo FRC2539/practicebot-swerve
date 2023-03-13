@@ -19,8 +19,8 @@ public class RobotContainer {
     private final LogitechController operatorController =
             new LogitechController(ControllerConstants.OPERATOR_CONTROLLER);
 
-    public static SlewRateLimiter forwardRateLimiter = new SlewRateLimiter(35, -16, 0);
-    public static SlewRateLimiter strafeRateLimiter = new SlewRateLimiter(35, -16, 0);
+    public static SlewRateLimiter forwardRateLimiter = new SlewRateLimiter(35, -35, 0);
+    public static SlewRateLimiter strafeRateLimiter = new SlewRateLimiter(35, -35, 0);
 
     private final SwerveDriveSubsystem swerveDriveSubsystem = new SwerveDriveSubsystem();
 
@@ -46,43 +46,12 @@ public class RobotContainer {
         leftDriveController.nameLeftTopLeft("Reset Gyro Angle");
         leftDriveController.nameLeftTopRight("Reset Pose");
 
-        leftDriveController.nameTrigger("Run Gripper");
-        leftDriveController.nameTrigger("Eject Gripper");
-
         // Leveling
         leftDriveController.getLeftBottomLeft().toggleOnTrue(swerveDriveSubsystem.levelChargeStationCommandDestiny());
 
         leftDriveController.getLeftBottomMiddle().whileTrue(run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
         leftDriveController.nameLeftBottomLeft("Level Charge Station");
         leftDriveController.nameLeftBottomMiddle("Lock Wheels");
-
-        // Auto Aim Behaviors
-        // leftDriveController
-        //         .getRightThumb()
-        //         .whileTrue(new AssistToGridCommand(
-        //                 swerveDriveSubsystem,
-        //                 visionSubsystem,
-        //                 lightsSubsystem,
-        //                 getTargetPoseSupplier(),
-        //                 this::getDriveForwardAxis));
-        // leftDriveController
-        //         .getLeftThumb()
-        //         .whileTrue(new AimAtPoseCommand(
-        //                         swerveDriveSubsystem,
-        //                         getTargetAimPoseSupplier(),
-        //                         this::getDriveForwardAxis,
-        //                         this::getDriveStrafeAxis)
-        //                 .alongWith(visionSubsystem.customLimelightModeCommand()));
-
-        // leftDriveController
-        //         .getLeftThumb()
-        //         .whileTrue(new AssistedMLPickupCommand(
-        //                 swerveDriveSubsystem,
-        //                 visionSubsystem,
-        //                 this::getDriveForwardAxis,
-        //                 this::getDriveStrafeAxis,
-        //                 this::getDriveRotationAxis)); // before running set the pipeline
-        // leftDriveController.nameLeftThumb("ML Pickup");
 
         leftDriveController.nameRightThumb("Assist to Pose");
         leftDriveController.nameRightThumb("Assisted ML Aim");
@@ -92,36 +61,6 @@ public class RobotContainer {
         rightDriveController.getRightBottomRight().whileTrue(swerveDriveSubsystem.characterizeCommand(true, false));
         rightDriveController.nameRightBottomMiddle("Characterize Forwards");
         rightDriveController.nameRightBottomMiddle("Characterize Backwards");
-
-        // rightDriveController
-        //         .getBottomThumb()
-        //         .whileTrue(new AssistedMLPickupCommand(
-        //                 swerveDriveSubsystem,
-        //                 visionSubsystem,
-        //                 this::getDriveForwardAxis,
-        //                 this::getDriveStrafeAxis,
-        //                 this::getDriveRotationAxis)); // before running set the pipeline
-        // rightDriveController.nameBottomThumb("ML Pickup");
-
-        // Cardinal drive commands (inverted since arm is back of robot)
-        // rightDriveController
-        //         .getPOVUp()
-        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
-        //                 Rotation2d.fromDegrees(180), this::getDriveForwardAxis, this::getDriveStrafeAxis));
-        // rightDriveController
-        //         .getPOVRight()
-        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
-        //                 Rotation2d.fromDegrees(90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
-        // rightDriveController
-        //         .getPOVDown()
-        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
-        //                 Rotation2d.fromDegrees(0), this::getDriveForwardAxis, this::getDriveStrafeAxis));
-        // rightDriveController
-        //         .getPOVLeft()
-        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
-        //                 Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
-
-        // operatorController.getRightBumper().whileTrue(intakeSubsystem.handoffCommand());
 
         rightDriveController.sendButtonNamesToNT();
         leftDriveController.sendButtonNamesToNT();

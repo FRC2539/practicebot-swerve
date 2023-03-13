@@ -1,21 +1,16 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.lib.logging.Logger;
 import frc.lib.swerve.CTREConfigs;
-import frc.robot.Constants.GlobalConstants;
 
 public class Robot extends TimedRobot {
     public static CTREConfigs ctreConfigs = new CTREConfigs();
-
-    public static Compressor compressor = new Compressor(GlobalConstants.PCM_ID, PneumaticsModuleType.REVPH);
 
     private RobotContainer robotContainer;
 
@@ -37,7 +32,6 @@ public class Robot extends TimedRobot {
 
         // Prevents the logging of many errors with our controllers
         DriverStation.silenceJoystickConnectionWarning(true);
-
     }
 
     @Override
@@ -45,7 +39,6 @@ public class Robot extends TimedRobot {
         CommandScheduler.getInstance().run();
 
         Logger.log("/Robot/Battery Voltage", RobotController.getBatteryVoltage());
-        Logger.log("/Robot/Pressure", compressor.getPressure());
 
         Logger.update();
     }
@@ -78,9 +71,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledPeriodic() {
-        // Calibrate swerve encoders
-        // robotContainer.getSwerveDriveSubsystem().calibrateIntegratedEncoders();
-
         // Update the autonomous command with driver station configuration
         robotContainer.autonomousManager.update();
         
