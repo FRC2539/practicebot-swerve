@@ -1,45 +1,58 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimesliceRobot;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.lib.logging.Logger;
 import frc.lib.swerve.CTREConfigs;
-import frc.robot.Constants.TimesliceConstants;
+import frc.robot.Constants.GlobalConstants;
 
-public class Robot extends TimesliceRobot {
+public class Robot extends TimedRobot {
     public static CTREConfigs ctreConfigs = new CTREConfigs();
+
+    public static Compressor compressor = new Compressor(GlobalConstants.PCM_ID, PneumaticsModuleType.REVPH);
 
     private RobotContainer robotContainer;
 
     private Command autonomousCommand;
 
-    public Robot() {
-        super(TimesliceConstants.ROBOT_PERIODIC_ALLOCATION, TimesliceConstants.CONTROLLER_PERIOD);
-    }
+    public Robot() {}
 
     @Override
     public void robotInit() {
+        // Disable default NetworkTables logging
+        DataLogManager.logNetworkTables(false);
+
+        // Begin controller inputs
+        if (isReal()) {
+            DriverStation.startDataLog(DataLogManager.getLog());
+        }
+
         robotContainer = new RobotContainer(this);
 
-        // Begin logging networktables, controller inputs, and more
-        if (isReal()) {
-            DataLogManager.logNetworkTables(false); // We have a custom implementation for better NT logging
-            DriverStation.startDataLog(DataLogManager.getLog());
-        } else {
-            // Prevents the logging of many errors with our controllers
-            DriverStation.silenceJoystickConnectionWarning(true);
-        }
+        // Prevents the logging of many errors with our controllers
+        DriverStation.silenceJoystickConnectionWarning(true);
+
     }
 
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
+
+        Logger.log("/Robot/Battery Voltage", RobotController.getBatteryVoltage());
+        Logger.log("/Robot/Pressure", compressor.getPressure());
+
+        Logger.update();
     }
 
     @Override
     public void autonomousInit() {
+
         autonomousCommand = robotContainer.getAutonomousCommand();
 
         // Schedule the chosen autonomous command
@@ -51,8 +64,10 @@ public class Robot extends TimesliceRobot {
 
     @Override
     public void teleopInit() {
+
         // Prevent any autonomous code from overrunning into teleop
         if (autonomousCommand != null) autonomousCommand.cancel();
+
     }
 
     @Override
@@ -60,6 +75,16 @@ public class Robot extends TimesliceRobot {
 
     @Override
     public void disabledInit() {}
+
+    @Override
+    public void disabledPeriodic() {
+        // Calibrate swerve encoders
+        // robotContainer.getSwerveDriveSubsystem().calibrateIntegratedEncoders();
+
+        // Update the autonomous command with driver station configuration
+        robotContainer.autonomousManager.update();
+        
+    }
 
     @Override
     public void testInit() {}

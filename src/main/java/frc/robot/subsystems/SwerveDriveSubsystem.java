@@ -294,10 +294,6 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                 .finallyDo((boolean interrupted) -> isCharacterizing = false);
     }
 
-    public void switchToBackupGyro() {
-        gyro = new NavXGyro();
-    }
-
     public void calibrateIntegratedEncoders() {
         // Reset each module using its absolute encoder
         for (SwerveModule module : modules) {
