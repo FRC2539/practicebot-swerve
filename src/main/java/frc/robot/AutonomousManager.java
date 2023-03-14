@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class AutonomousManager {
-    private static final AutonomousOption defaultAuto = AutonomousOption.STATION_PLACE1ANDCLIMB;
+    private static final AutonomousOption defaultAuto = AutonomousOption.CIRCLE;
 
     // Add tunables for all autonomous configuration options
     LoggedReceiver waitDuration;
@@ -116,9 +116,11 @@ public class AutonomousManager {
         STATION_PLACE1ANDCLIMB(
                 StartingLocation.STATION, 1, "station_place1andclimb", new PathConstraints(3, 2.25)),
         OPEN_PLACE1ANDTAXI(
-                StartingLocation.OPEN, 1, "open_place1andtaxi", new PathConstraints(3, 2.25)),
+                StartingLocation.OPEN, 1, "open_place1andtaxi", new PathConstraints(3, 3.25)),
         CABLE_PLACE1ANDTAXI(
-                StartingLocation.OPEN, 1, "cable_place1andtaxi", new PathConstraints(3, 2.25));
+                StartingLocation.CABLE, 1, "cable_place1andtaxi", new PathConstraints(3, 2.9)),
+        CIRCLE(
+                StartingLocation.STATION, 2, "circle", new PathConstraints(2.75, 2.25));
         //CABLE_PLACE1ANDCLIMB(StartingLocation.CABLE, 1, "cable_place1andclimb", new PathConstraints(5, 5)),
         //CABLE_PLACE2(StartingLocation.CABLE, 2, "cable_place2", new PathConstraints(4, 3)),
         //CABLE_PLACE3(StartingLocation.CABLE, 3, "cable_place3", new PathConstraints(3.5, 3));
