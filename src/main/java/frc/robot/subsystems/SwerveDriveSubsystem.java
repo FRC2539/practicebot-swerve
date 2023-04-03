@@ -15,7 +15,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,7 +24,6 @@ import frc.lib.gyro.NavXGyro;
 import frc.lib.interpolation.MovingAverageVelocity;
 import frc.lib.logging.LoggedReceiver;
 import frc.lib.logging.Logger;
-import frc.lib.math.MathUtils;
 import frc.lib.swerve.SwerveDriveSignal;
 import frc.lib.swerve.SwerveModule;
 import frc.robot.Constants;
@@ -48,6 +46,9 @@ public class SwerveDriveSubsystem extends SubsystemBase {
     private SwerveDriveSignal driveSignal = new SwerveDriveSignal();
 
     private LoggedReceiver pidValueReciever;
+
+    /* new logged reciever value */
+    private LoggedReceiver angleRateThresholdReceiver;
 
     private double levelingMaxSpeed;
 
@@ -138,37 +139,18 @@ public class SwerveDriveSubsystem extends SubsystemBase {
         });
     }
 
-    public Command levelChargeStationCommandArlene() {
-        var constraints = new TrapezoidProfile.Constraints(0.4, 0.8);
-        var tiltController = new ProfiledPIDController(0.27, 0, 0.01, constraints);
+    private class AnyContainer<T> {
+        public T thing;
 
-        // End with no pitch and stationary
-        State goal = new State(0, 0);
-
-        // Four degrees of tolerance
-        tiltController.setTolerance(4, 0.1);
-
-        return run(() -> {
-                    double tilt = getTiltAmountInDegrees();
-
-                    Logger.log("/SwerveDriveSubsystem/Tilt Rate", getTiltRate());
-
-                    // Negative pitch -> drive forward, Positive pitch -> drive backward
-
-                    Translation2d direction = new Translation2d(
-                            getNormalVector3d().getX(), getNormalVector3d().getY());
-
-                    Translation2d finalDirection = direction.times(tiltController.calculate(tilt, goal));
-
-                    ChassisSpeeds velocity = new ChassisSpeeds(finalDirection.getX(), finalDirection.getY(), 0);
-
-                    if (MathUtils.equalsWithinError(0, tilt, 8) || getTiltAmount() < -0.2) lock();
-                    else setVelocity(velocity, false);
-                })
-                .repeatedly();
+        public AnyContainer(T thing) {
+            this.thing = thing;
+        }
     }
 
     public Command levelChargeStationCommandDestiny() {
+        Timer myFavoriteTimer = new Timer();
+        AnyContainer<Double> sketchyBoi = new AnyContainer<Double>(0.5);
+        AnyContainer<Boolean> isGoingSlower = new AnyContainer<Boolean>(false);
         return run(() -> {
                     double tilt = getTiltAmountInDegrees();
 
@@ -183,16 +165,34 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     double speed = tiltController.calculate(tilt, 0);
                     if (speed >= levelingMaxSpeed) speed = levelingMaxSpeed;
 
-                    Translation2d finalDirection = direction.times(tiltController.calculate(tilt, 0));
+                    speed *= (isGoingSlower.thing ? 0.5 : 1);
+
+                    Translation2d finalDirection = direction.times(speed);
 
                     ChassisSpeeds velocity = new ChassisSpeeds(finalDirection.getX(), finalDirection.getY(), 0);
+                    // if (tiltController.atSetpoint()) myFavoriteTimer.restart();
 
-                    if (tiltController.atSetpoint()) {
+                    sketchyBoi.thing -= 0.02;
+
+                    if (tiltController.atSetpoint()
+                            || Math.abs(getTiltRate()) >= Math.toDegrees(angleRateThresholdReceiver.getDouble())) {
+                        sketchyBoi.thing = 0.5;
+                        isGoingSlower.thing = true;
+                    }
+
+                    if (sketchyBoi.thing > 0) {
+                        myFavoriteTimer.start();
                         lock();
-                    } else setVelocity(velocity, false);
+                    } else {
+                        setVelocity(velocity, false);
+                        myFavoriteTimer.stop();
+                    }
                 })
                 .beforeStarting(() -> {
+                    isGoingSlower.thing = false;
+                    myFavoriteTimer.reset();
                     isLevelingAuto = true;
+                    sketchyBoi.thing = 0.0;
                     var values = pidValueReciever.getDoubleArray();
                     if (values.length < 5) return;
                     tiltController.setPID(values[0], values[1], values[2]);
@@ -203,6 +203,40 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     tiltController.reset();
                     isLevelingAuto = false;
                 });
+        // return run(() -> {
+        //             double tilt = getTiltAmountInDegrees();
+
+        //             // Negative pitch -> drive forward, Positive pitch -> drive backward
+
+        //             Translation2d direction = new Translation2d(
+        //                     1,
+        //                     new Rotation2d(
+        //                             getNormalVector3d().getX(),
+        //                             getNormalVector3d().getY()));
+
+        //             double speed = tiltController.calculate(tilt, 0);
+        //             if (speed >= levelingMaxSpeed) speed = levelingMaxSpeed;
+
+        //             Translation2d finalDirection = direction.times(tiltController.calculate(tilt, 0));
+
+        //             ChassisSpeeds velocity = new ChassisSpeeds(finalDirection.getX(), finalDirection.getY(), 0);
+
+        //             if (tiltController.atSetpoint()) {
+        //                 lock();
+        //             } else setVelocity(velocity, false);
+        //         })
+        //         .beforeStarting(() -> {
+        //             isLevelingAuto = true;
+        //             var values = pidValueReciever.getDoubleArray();
+        //             if (values.length < 5) return;
+        //             tiltController.setPID(values[0], values[1], values[2]);
+        //             tiltController.setTolerance(values[3]);
+        //             levelingMaxSpeed = values[4];
+        //         })
+        //         .finallyDo((interrupted) -> {
+        //             tiltController.reset();
+        //             isLevelingAuto = false;
+        //         });
     }
 
     public boolean isLevelDestiny() {
