@@ -73,18 +73,18 @@ public class RobotContainer {
 
     public double getDriveForwardAxis() {
         return forwardRateLimiter.calculate(
-                -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed);
+                -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed * 0.75);
     }
 
     public double getDriveStrafeAxis() {
         return strafeRateLimiter.calculate(
-                -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed);
+                -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed * 0.75);
     }
 
     public double getDriveRotationAxis() {
-        return -square(deadband(rightDriveController.getXAxis().getRaw(), 0.05))
+        return -cube(deadband(rightDriveController.getXAxis().getRaw(), 0.05))
                 * Constants.SwerveConstants.maxAngularVelocity
-                * 0.75;
+                * 0.5;
     }
 
     private static double deadband(double value, double tolerance) {
@@ -95,6 +95,10 @@ public class RobotContainer {
 
     private static double square(double value) {
         return Math.copySign(value * value, value);
+    }
+
+    private static double cube(double value) {
+        return Math.copySign(value * value * value, value);
     }
 
     public SwerveDriveSubsystem getSwerveDriveSubsystem() {
