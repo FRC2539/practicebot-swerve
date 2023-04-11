@@ -51,7 +51,7 @@ public class AutonomousManager {
                 (ChassisSpeeds velocity) -> swerveDriveSubsystem.setVelocity(velocity, false, false),
                 eventMap,
                 true,
-                swerveDriveSubsystem);  
+                swerveDriveSubsystem);
     }
 
     public void update() {
@@ -114,17 +114,13 @@ public class AutonomousManager {
         // OPEN_PLACE1ANDCLIMB(StartingLocation.OPEN, 1, "open_place1andclimb", new PathConstraints(5, 5)),
         // OPEN_PLACE2(StartingLocation.OPEN, 2, "open_place2", new PathConstraints(4, 3)),
         // OPEN_PLACE3(StartingLocation.OPEN, 3, "open_place3", new PathConstraints(4, 4)),
-        STATION_PLACE1ANDCLIMB(
-                StartingLocation.STATION, 1, "station_place1andclimb", new PathConstraints(3, 2.25)),
-        OPEN_PLACE1ANDTAXI(
-                StartingLocation.OPEN, 1, "open_place1andtaxi", new PathConstraints(3, 3.25)),
-        CABLE_PLACE1ANDTAXI(
-                StartingLocation.CABLE, 1, "cable_place1andtaxi", new PathConstraints(2.85, 2.5)),
-        CIRCLE(
-                StartingLocation.STATION, 2, "circle", new PathConstraints(2.75, 2.25));
-        //CABLE_PLACE1ANDCLIMB(StartingLocation.CABLE, 1, "cable_place1andclimb", new PathConstraints(5, 5)),
-        //CABLE_PLACE2(StartingLocation.CABLE, 2, "cable_place2", new PathConstraints(4, 3)),
-        //CABLE_PLACE3(StartingLocation.CABLE, 3, "cable_place3", new PathConstraints(3.5, 3));
+        STATION_PLACE1ANDCLIMB(StartingLocation.STATION, 1, "station_place1andclimb", new PathConstraints(3, 2.25)),
+        OPEN_PLACE1ANDTAXI(StartingLocation.OPEN, 1, "open_place1andtaxi", new PathConstraints(3, 3.25)),
+        CABLE_PLACE1ANDTAXI(StartingLocation.CABLE, 1, "cable_place1andtaxi", new PathConstraints(2.85, 2.5)),
+        CIRCLE(StartingLocation.STATION, 2, "circle", new PathConstraints(2.75, 2.25));
+        // CABLE_PLACE1ANDCLIMB(StartingLocation.CABLE, 1, "cable_place1andclimb", new PathConstraints(5, 5)),
+        // CABLE_PLACE2(StartingLocation.CABLE, 2, "cable_place2", new PathConstraints(4, 3)),
+        // CABLE_PLACE3(StartingLocation.CABLE, 3, "cable_place3", new PathConstraints(3.5, 3));
 
         private List<PathPlannerTrajectory> path;
         private String pathName;

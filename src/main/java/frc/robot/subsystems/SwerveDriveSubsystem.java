@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -14,6 +15,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
@@ -94,7 +97,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                 getModulePositions(),
                 new Pose2d(),
                 VecBuilder.fill(0.01, 0.01, 0.01),
-                VecBuilder.fill(0.7, 0.7, 0.7)); // might need to bring these back up (was 0.5)
+                VecBuilder.fill(0.9, 0.9, 0.9)); // might need to bring these back up (was 0.5)
 
         // Allow us to toggle on second order kinematics
         isSecondOrder = Logger.tunable("/SwerveDriveSubsystem/isSecondOrder", true);
@@ -350,6 +353,10 @@ public class SwerveDriveSubsystem extends SubsystemBase {
 
     public void addVisionPoseEstimate(Pose2d pose, double timestamp) {
         swervePoseEstimator.addVisionMeasurement(pose, timestamp);
+    }
+
+    public void addVisionPoseEstimate(Pose2d pose, double timestamp, Matrix<N3, N1> stdDevs) {
+        swervePoseEstimator.addVisionMeasurement(pose, timestamp, stdDevs);
     }
 
     /**

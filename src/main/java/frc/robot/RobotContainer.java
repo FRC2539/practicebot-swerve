@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.controller.LogitechController;
 import frc.lib.controller.ThrustmasterJoystick;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.commands.DoubleSubstationAssistCommand;
 import frc.robot.subsystems.*;
 
 public class RobotContainer {
@@ -23,6 +24,7 @@ public class RobotContainer {
     public static SlewRateLimiter strafeRateLimiter = new SlewRateLimiter(35, -35, 0);
 
     private final SwerveDriveSubsystem swerveDriveSubsystem = new SwerveDriveSubsystem();
+    private final VisionSubsystem visionSubsystem = new VisionSubsystem(swerveDriveSubsystem);
 
     public AutonomousManager autonomousManager;
 
@@ -44,7 +46,7 @@ public class RobotContainer {
                 .getLeftTopRight()
                 .onTrue(runOnce(() -> swerveDriveSubsystem.setPose(new Pose2d()), swerveDriveSubsystem));
         leftDriveController.nameLeftTopLeft("Reset Gyro Angle");
-        leftDriveController.nameLeftTopRight("Reset Pose");
+        leftDriveController.getLeftTopRight().whileTrue(visionSubsystem.resetPoseWithApriltag());
 
         // Leveling
         leftDriveController.getLeftBottomLeft().toggleOnTrue(swerveDriveSubsystem.levelChargeStationCommandDestiny());
@@ -53,8 +55,7 @@ public class RobotContainer {
         leftDriveController.nameLeftBottomLeft("Level Charge Station");
         leftDriveController.nameLeftBottomMiddle("Lock Wheels");
 
-        leftDriveController.nameRightThumb("Assist to Pose");
-        leftDriveController.nameRightThumb("Assisted ML Aim");
+        leftDriveController.getLeftThumb().whileTrue(new DoubleSubstationAssistCommand(swerveDriveSubsystem, visionSubsystem));
 
         /* Set right joystick bindings */
         rightDriveController.getRightBottomMiddle().whileTrue(swerveDriveSubsystem.characterizeCommand(true, true));
@@ -73,12 +74,16 @@ public class RobotContainer {
 
     public double getDriveForwardAxis() {
         return forwardRateLimiter.calculate(
-                -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed * 0.75);
+                -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05))
+                        * Constants.SwerveConstants.maxSpeed
+                        * 0.75);
     }
 
     public double getDriveStrafeAxis() {
         return strafeRateLimiter.calculate(
-                -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed * 0.75);
+                -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05))
+                        * Constants.SwerveConstants.maxSpeed
+                        * 0.75);
     }
 
     public double getDriveRotationAxis() {

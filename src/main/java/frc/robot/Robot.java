@@ -60,7 +60,6 @@ public class Robot extends TimedRobot {
 
         // Prevent any autonomous code from overrunning into teleop
         if (autonomousCommand != null) autonomousCommand.cancel();
-
     }
 
     @Override
@@ -73,7 +72,6 @@ public class Robot extends TimedRobot {
     public void disabledPeriodic() {
         // Update the autonomous command with driver station configuration
         robotContainer.autonomousManager.update();
-        
     }
 
     @Override
