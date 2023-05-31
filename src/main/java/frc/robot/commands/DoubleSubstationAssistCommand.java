@@ -20,15 +20,16 @@ import frc.robot.subsystems.VisionSubsystem;
 public class DoubleSubstationAssistCommand extends CommandBase {
     private SwerveDriveSubsystem swerveDriveSubsystem;
     private VisionSubsystem visionSubsystem;
+    private double savedValue;
  
-    private Constraints distanceConstraints = new Constraints(0.5, 1);
-    private ProfiledPIDController distanceController = new ProfiledPIDController(4.0, 0, 0.01, distanceConstraints);
-    private PIDController thetaController = new PIDController(4.0, 0, 0);
+    private Constraints distanceConstraints = new Constraints(2, 3);
+    private ProfiledPIDController distanceController = new ProfiledPIDController(1.5, 0, 0.01, distanceConstraints);
+    private PIDController thetaController = new PIDController(2, 0, 0);
  
     private final Pose2d positionApriltag = FieldConstants.APRIL_TAG_FIELD_LAYOUT.getTagPose(DriverStation.getAlliance() == Alliance.Red ? 5 : 4).get().toPose2d();
  
-    private final double FORK_SIZE = Units.feetToMeters(2.516);
-    private final double ROBOT_DISTANCE_TO_APRILTAG = Units.inchesToMeters(18 + 1.5 + 13); //this and the above are polaceholders
+    private final double FORK_SIZE = Units.feetToMeters(1.9);
+    private final double ROBOT_DISTANCE_TO_APRILTAG = Units.inchesToMeters(10 + 1.5 + 13); //this and the above are polaceholders
  
     public DoubleSubstationAssistCommand(SwerveDriveSubsystem swerveDriveSubsystem, VisionSubsystem visionSubsystem) {
         this.swerveDriveSubsystem = swerveDriveSubsystem;
@@ -44,6 +45,8 @@ public class DoubleSubstationAssistCommand extends CommandBase {
     @Override
     public void initialize() {
         distanceController.reset(0);
+        savedValue = visionSubsystem.translationStdDevCoefficient;
+        visionSubsystem.translationStdDevCoefficient = 0.1;
     }
  
     @Override
@@ -57,12 +60,17 @@ public class DoubleSubstationAssistCommand extends CommandBase {
         double distance = targetPositionRobotRelative.getNorm();
         var direction = targetPositionRobotRelative.getAngle();
  
-        double translationVelocity = distanceController.calculate(distance, 0);
+        double translationVelocity = distanceController.calculate(distance, 0) + distanceController.getSetpoint().velocity;
         double omega = thetaController.calculate(swerveDriveSubsystem.getRotation().getRadians());
  
         if (distanceController.atGoal()) translationVelocity = 0;
         if (thetaController.atSetpoint()) omega = 0;
  
-        swerveDriveSubsystem.setVelocity(new ChassisSpeeds(direction.getCos() * -translationVelocity, direction.getSin() * -translationVelocity, omega), false);
+        swerveDriveSubsystem.setVelocity(new ChassisSpeeds(-direction.getCos() * translationVelocity, -direction.getSin() * translationVelocity, omega), true);
+    }
+
+    @Override
+    public void end(boolean isInterrupted) {
+        visionSubsystem.translationStdDevCoefficient = savedValue;
     }
 }

@@ -20,7 +20,7 @@ import frc.robot.Constants.VisionConstants;
 import java.util.Optional;
 
 public class VisionSubsystem extends SubsystemBase {
-    private final double translationStdDevCoefficient = 0.3;
+    public double translationStdDevCoefficient = 0.3;
     private final double rotationStdDevCoefficient = 0.9;
 
     private LimelightMode backLimelightMode = LimelightMode.APRILTAG;
