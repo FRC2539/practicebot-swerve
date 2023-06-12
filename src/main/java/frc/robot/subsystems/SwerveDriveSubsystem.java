@@ -18,7 +18,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -38,6 +37,7 @@ import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
+import frc.lib.math.MathUtils;
 
 public class SwerveDriveSubsystem extends SubsystemBase {
     private final SwerveDrivePoseEstimator swervePoseEstimator;
@@ -69,9 +69,11 @@ public class SwerveDriveSubsystem extends SubsystemBase {
     // private PIDController tiltController = new PIDController(0.75 / 15, 0, 0.02);
     private PIDController tiltController = new PIDController(0.75 / 12, 0, 0.02);
 
-    // PID controller used for cardinal command
+    // Cardinal command
     private ProfiledPIDController omegaController =
             new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(8, 8));
+    private final double maxCardinalVelocity = 4.5;
+    
 
     private double previousTilt = 0;
     private double tiltRate = 0;
@@ -131,15 +133,35 @@ public class SwerveDriveSubsystem extends SubsystemBase {
         });
     }
 
+    // public Command cardinalCommand(Rotation2d targetAngle, DoubleSupplier forward, DoubleSupplier strafe) {
+    //     omegaController.setTolerance(Units.degreesToRadians(1));
+    //     omegaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    //     return run(() -> {
+    //         var rotationVelocity = omegaController.calculate(pose.getRotation().getRadians(), targetAngle.getRadians());
+
+    //         setVelocity(new ChassisSpeeds(forward.getAsDouble(), strafe.getAsDouble(), rotationVelocity), true);
+    //     });
+    // }
+
     public Command cardinalCommand(Rotation2d targetAngle, DoubleSupplier forward, DoubleSupplier strafe) {
-        omegaController.setTolerance(Units.degreesToRadians(1));
         omegaController.enableContinuousInput(-Math.PI, Math.PI);
 
         return run(() -> {
-            var rotationVelocity = omegaController.calculate(pose.getRotation().getRadians(), targetAngle.getRadians());
+                    var rotationCorrection =
+                            omegaController.calculate(pose.getRotation().getRadians(), targetAngle.getRadians());
 
-            setVelocity(new ChassisSpeeds(forward.getAsDouble(), strafe.getAsDouble(), rotationVelocity), true);
-        });
+                    setVelocity(
+                            new ChassisSpeeds(
+                                    forward.getAsDouble(),
+                                    strafe.getAsDouble(),
+                                    MathUtils.ensureRange(
+                                            rotationCorrection, -maxCardinalVelocity, maxCardinalVelocity)),
+                            true);
+                })
+                .beforeStarting(() -> {
+                    omegaController.reset(null);
+                });
     }
 
     private class AnyContainer<T> {

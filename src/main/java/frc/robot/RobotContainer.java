@@ -9,8 +9,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.controller.LogitechController;
 import frc.lib.controller.ThrustmasterJoystick;
 import frc.robot.Constants.ControllerConstants;
-import frc.robot.commands.DoubleSubstationAssistCommand;
 import frc.robot.subsystems.*;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 public class RobotContainer {
     private final ThrustmasterJoystick leftDriveController =
@@ -24,7 +24,6 @@ public class RobotContainer {
     public static SlewRateLimiter strafeRateLimiter = new SlewRateLimiter(35, -35, 0);
 
     private final SwerveDriveSubsystem swerveDriveSubsystem = new SwerveDriveSubsystem();
-    private final VisionSubsystem visionSubsystem = new VisionSubsystem(swerveDriveSubsystem);
 
     public AutonomousManager autonomousManager;
 
@@ -46,7 +45,6 @@ public class RobotContainer {
                 .getLeftTopRight()
                 .onTrue(runOnce(() -> swerveDriveSubsystem.setPose(new Pose2d()), swerveDriveSubsystem));
         leftDriveController.nameLeftTopLeft("Reset Gyro Angle");
-        leftDriveController.getLeftTopRight().whileTrue(visionSubsystem.resetPoseWithApriltag());
 
         // Leveling
         leftDriveController.getLeftBottomLeft().toggleOnTrue(swerveDriveSubsystem.levelChargeStationCommandDestiny());
@@ -54,8 +52,6 @@ public class RobotContainer {
         leftDriveController.getLeftBottomMiddle().whileTrue(run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
         leftDriveController.nameLeftBottomLeft("Level Charge Station");
         leftDriveController.nameLeftBottomMiddle("Lock Wheels");
-
-        leftDriveController.getLeftThumb().whileTrue(new DoubleSubstationAssistCommand(swerveDriveSubsystem, visionSubsystem));
 
         /* Set right joystick bindings */
         rightDriveController.getRightBottomMiddle().whileTrue(swerveDriveSubsystem.characterizeCommand(true, true));
@@ -66,6 +62,24 @@ public class RobotContainer {
         rightDriveController.sendButtonNamesToNT();
         leftDriveController.sendButtonNamesToNT();
         operatorController.sendButtonNamesToNT();
+
+        // Cardinal drive commands (inverted since the arm is on the back of the robot)
+        rightDriveController
+                .getPOVUp()
+                .whileTrue(swerveDriveSubsystem.cardinalCommand(
+                        Rotation2d.fromDegrees(180), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        rightDriveController
+                .getPOVRight()
+                .whileTrue(swerveDriveSubsystem.cardinalCommand(
+                        Rotation2d.fromDegrees(90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        rightDriveController
+                .getPOVDown()
+                .whileTrue(swerveDriveSubsystem.cardinalCommand(
+                        Rotation2d.fromDegrees(0), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        rightDriveController
+                .getPOVLeft()
+                .whileTrue(swerveDriveSubsystem.cardinalCommand(
+                        Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
     }
 
     public Command getAutonomousCommand() {
@@ -76,14 +90,14 @@ public class RobotContainer {
         return forwardRateLimiter.calculate(
                 -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05))
                         * Constants.SwerveConstants.maxSpeed
-                        * 0.75);
+                        * 0.85);
     }
 
     public double getDriveStrafeAxis() {
         return strafeRateLimiter.calculate(
                 -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05))
                         * Constants.SwerveConstants.maxSpeed
-                        * 0.75);
+                        * 0.85);
     }
 
     public double getDriveRotationAxis() {
