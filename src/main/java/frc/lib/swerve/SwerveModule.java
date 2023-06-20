@@ -4,6 +4,14 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.WPI_CANCoder;
+import com.ctre.phoenixpro.configs.FeedbackConfigs;
+import com.ctre.phoenixpro.configs.MagnetSensorConfigs;
+import com.ctre.phoenixpro.configs.MotorOutputConfigs;
+import com.ctre.phoenixpro.configs.TalonFXConfiguration;
+import com.ctre.phoenixpro.configs.TalonFXConfigurator;
+import com.ctre.phoenixpro.hardware.TalonFX;
+import com.ctre.phoenixpro.signals.InvertedValue;
+
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -15,8 +23,8 @@ import frc.robot.Robot;
 public class SwerveModule {
     public int moduleNumber;
     private double angleOffset;
-    private WPI_TalonFX angleMotor;
-    private WPI_TalonFX driveMotor;
+    private TalonFX angleMotor;
+    private TalonFX driveMotor;
     private WPI_CANCoder angleEncoder;
     private double lastAngle;
 
@@ -41,14 +49,14 @@ public class SwerveModule {
 
         /* Angle Motor Config */
         angleMotor = moduleConstants.canivoreName.isEmpty()
-                ? new WPI_TalonFX(moduleConstants.angleMotorID)
-                : new WPI_TalonFX(moduleConstants.angleMotorID, moduleConstants.canivoreName.get());
+                ? new TalonFX(moduleConstants.angleMotorID)
+                : new TalonFX(moduleConstants.angleMotorID, moduleConstants.canivoreName.get());
         configAngleMotor();
 
         /* Drive Motor Config */
         driveMotor = moduleConstants.canivoreName.isEmpty()
-                ? new WPI_TalonFX(moduleConstants.driveMotorID)
-                : new WPI_TalonFX(moduleConstants.driveMotorID, moduleConstants.canivoreName.get());
+                ? new TalonFX(moduleConstants.driveMotorID)
+                : new TalonFX(moduleConstants.driveMotorID, moduleConstants.canivoreName.get());
         configDriveMotor();
 
         lastAngle = getState().angle.getDegrees();
@@ -143,7 +151,9 @@ public class SwerveModule {
     public void resetToAbsolute() {
         double absolutePosition = Conversions.degreesToFalcon(
                 getCanCoder().getDegrees() - angleOffset, Constants.SwerveConstants.angleGearRatio);
-        angleMotor.setSelectedSensorPosition(absolutePosition);
+        FeedbackConfigs feedbackConfigs = new FeedbackConfigs();
+        feedbackConfigs.FeedbackRotorOffset = absolutePosition;
+        angleMotor.getConfigurator().apply(feedbackConfigs);
     }
 
     private void configAngleEncoder() {
@@ -152,33 +162,45 @@ public class SwerveModule {
     }
 
     private void configAngleMotor() {
-        angleMotor.configFactoryDefault();
-        angleMotor.configAllSettings(Robot.ctreConfigs.swerveAngleFXConfig);
-        angleMotor.setInverted(Constants.SwerveConstants.angleMotorInvert);
-        angleMotor.setNeutralMode(Constants.SwerveConstants.angleNeutralMode);
-        angleMotor.enableVoltageCompensation(true);
+        TalonFXConfigurator configurator = angleMotor.getConfigurator();
+        configurator.apply(Robot.ctreConfigs.swerveAngleFXConfig);
+
+        MotorOutputConfigs outputConfigs = new MotorOutputConfigs();
+
+        outputConfigs.Inverted = Constants.SwerveConstants.angleMotorInvert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+        outputConfigs.NeutralMode = Constants.SwerveConstants.angleNeutralMode;
+
+        configurator.apply(outputConfigs);
+
         resetToAbsolute();
     }
 
     private void configDriveMotor() {
-        driveMotor.configFactoryDefault();
-        driveMotor.configAllSettings(Robot.ctreConfigs.swerveDriveFXConfig);
-        driveMotor.setNeutralMode(Constants.SwerveConstants.driveNeutralMode);
-        driveMotor.setSelectedSensorPosition(0);
-        driveMotor.enableVoltageCompensation(true);
-        driveMotor.setSensorPhase(Constants.SwerveConstants.driveEncoderInvert);
-        driveMotor.setInverted(Constants.SwerveConstants.driveMotorInvert);
+        TalonFXConfigurator configurator = driveMotor.getConfigurator();
+        configurator.apply(Robot.ctreConfigs.swerveDriveFXConfig);
+
+        MotorOutputConfigs outputConfigs = new MotorOutputConfigs();
+
+        outputConfigs.NeutralMode = Constants.SwerveConstants.driveNeutralMode;
+        outputConfigs.Inverted = Constants.SwerveConstants.driveMotorInvert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
+        
+        configurator.apply(outputConfigs);
+
+        FeedbackConfigs feedbackConfigs = new FeedbackConfigs();
+        feedbackConfigs.FeedbackRotorOffset = 0;
+        
+        configurator.apply(feedbackConfigs);
     }
 
     public Rotation2d getCanCoder() {
         return Rotation2d.fromDegrees(angleEncoder.getAbsolutePosition());
     }
 
-    public WPI_TalonFX getDriveMotor() {
+    public TalonFX getDriveMotor() {
         return driveMotor;
     }
 
-    public WPI_TalonFX getAngleMotor() {
+    public TalonFX getAngleMotor() {
         return angleMotor;
     }
 

@@ -1,6 +1,8 @@
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenixpro.signals.NeutralModeValue;
+
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
@@ -252,13 +254,15 @@ public final class Constants {
         public static final double angleKP = 0.2;
         public static final double angleKI = 0.0;
         public static final double angleKD = 0.0;
-        public static final double angleKF = 0.0;
+        public static final double angleKV = 0.0;
+        public static final double angleKS = 0.0;
 
         /* Drive Motor PID Values */
         public static final double driveKP = 0.10;
         public static final double driveKI = 0.0;
         public static final double driveKD = 0.0;
-        public static final double driveKF = 0.0;
+        public static final double driveKV = 0.0;
+        public static final double driveKS = 0.0;
 
         /* Swerve Profiling Values */
         public static final double maxSpeed = 4.968230454756032; // meters per second
@@ -281,8 +285,8 @@ public final class Constants {
         public static final double preciseDrivingModeSpeedMultiplier = 0.2;
 
         /* Neutral Modes */
-        public static final NeutralMode angleNeutralMode = NeutralMode.Brake;
-        public static final NeutralMode driveNeutralMode = NeutralMode.Brake;
+        public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;
+        public static final NeutralModeValue driveNeutralMode = NeutralModeValue.Brake;
 
         /* Drive Motor Inverts */
         public static final boolean driveMotorInvert = false;
