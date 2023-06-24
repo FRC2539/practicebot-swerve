@@ -72,7 +72,8 @@ public class SwerveModule {
 
         if (isOpenLoop) {
             double percentOutput = desiredState.speedMetersPerSecond / Constants.SwerveConstants.maxSpeed;
-            driveMotor.set(ControlMode.PercentOutput, percentOutput);
+            driveMotor.setControl(new VoltageOut
+                ControlMode.PercentOutput, percentOutput);
         } else {
             double velocity = Conversions.MPSToFalcon(
                     desiredState.speedMetersPerSecond,
