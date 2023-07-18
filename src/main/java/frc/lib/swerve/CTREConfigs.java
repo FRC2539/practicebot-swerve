@@ -8,7 +8,6 @@ import com.ctre.phoenixpro.configs.CurrentLimitsConfigs;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
 
 import frc.robot.Constants;
-import frc.robot.Constants.GlobalConstants;
 
 public final class CTREConfigs {
     public TalonFXConfiguration swerveAngleFXConfig;
