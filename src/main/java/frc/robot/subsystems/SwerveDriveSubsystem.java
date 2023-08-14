@@ -357,7 +357,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
     public void calibrateIntegratedEncoders() {
         // Reset each module using its absolute encoder
         for (SwerveModule module : modules) {
-            module.resetToAbsolute();
+            module.findAngularOffset();
         }
     }
 
