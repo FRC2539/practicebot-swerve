@@ -1,23 +1,22 @@
 package frc.lib.swerve;
 
-import com.ctre.phoenix.sensors.AbsoluteSensorRange;
-import com.ctre.phoenix.sensors.CANCoderConfiguration;
-import com.ctre.phoenix.sensors.SensorInitializationStrategy;
-import com.ctre.phoenix.sensors.SensorTimeBase;
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import frc.robot.Constants;
 
 public final class CTREConfigs {
     public TalonFXConfiguration swerveAngleFXConfig;
     public TalonFXConfiguration swerveDriveFXConfig;
-    public CANCoderConfiguration swerveCanCoderConfig;
+    public CANcoderConfiguration swerveCanCoderConfig;
 
     public CTREConfigs() {
         swerveAngleFXConfig = new TalonFXConfiguration();
         swerveDriveFXConfig = new TalonFXConfiguration();
-        swerveCanCoderConfig = new CANCoderConfiguration();
+        swerveCanCoderConfig = new CANcoderConfiguration();
 
         /* Swerve Angle Motor Configurations */
         CurrentLimitsConfigs angleSupplyLimit = new CurrentLimitsConfigs();
@@ -32,6 +31,8 @@ public final class CTREConfigs {
         swerveAngleFXConfig.Slot0.kS = Constants.SwerveConstants.angleKS;
         swerveAngleFXConfig.Slot0.kV = Constants.SwerveConstants.angleKV;
         swerveAngleFXConfig.CurrentLimits = angleSupplyLimit;
+
+        swerveAngleFXConfig.ClosedLoopGeneral.ContinuousWrap = true;
 
         /* Swerve Drive Motor Configuration */
         CurrentLimitsConfigs driveSupplyLimit = new CurrentLimitsConfigs();
@@ -50,9 +51,9 @@ public final class CTREConfigs {
         swerveDriveFXConfig.CurrentLimits = driveSupplyLimit;
 
         /* Swerve CANCoder Configuration */
-        swerveCanCoderConfig.absoluteSensorRange = AbsoluteSensorRange.Unsigned_0_to_360;
-        swerveCanCoderConfig.sensorDirection = Constants.SwerveConstants.canCoderInvert;
-        swerveCanCoderConfig.initializationStrategy = SensorInitializationStrategy.BootToAbsolutePosition;
-        swerveCanCoderConfig.sensorTimeBase = SensorTimeBase.PerSecond;
+        swerveCanCoderConfig.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Unsigned_0To1;
+        swerveCanCoderConfig.MagnetSensor.SensorDirection = Constants.SwerveConstants.canCoderInvert;
+
+        /* does not set the magnet offset currently due to needing to set magnet offset to trim */
     }
 }

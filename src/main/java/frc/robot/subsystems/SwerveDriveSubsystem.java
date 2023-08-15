@@ -90,9 +90,6 @@ public class SwerveDriveSubsystem extends SubsystemBase {
             new SwerveModule(3, Constants.SwerveConstants.Mod3.constants)
         };
 
-        // Reset each module using its absolute encoder to avoid having modules fail to align
-        calibrateIntegratedEncoders();
-
         // Initialize the swerve drive pose estimator with access to the module positions.
         swervePoseEstimator = new SwerveDrivePoseEstimator(
                 SwerveConstants.swerveKinematics,
@@ -354,13 +351,6 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                 .finallyDo((boolean interrupted) -> isCharacterizing = false);
     }
 
-    public void calibrateIntegratedEncoders() {
-        // Reset each module using its absolute encoder
-        for (SwerveModule module : modules) {
-            module.findAngularOffset();
-        }
-    }
-
     public void setCustomMaxSpeedSupplier(DoubleSupplier maxSpeedSupplier) {
         this.maxSpeedSupplier = maxSpeedSupplier;
     }
@@ -578,10 +568,10 @@ public class SwerveDriveSubsystem extends SubsystemBase {
         });
 
         Logger.log("/SwerveDriveSubsystem/CANCoder Angles", new double[] {
-            modules[0].getCanCoder().getDegrees(),
-            modules[1].getCanCoder().getDegrees(),
-            modules[2].getCanCoder().getDegrees(),
-            modules[3].getCanCoder().getDegrees()
+            modules[0].getCanCoderNoOffset().getDegrees(),
+            modules[1].getCanCoderNoOffset().getDegrees(),
+            modules[2].getCanCoderNoOffset().getDegrees(),
+            modules[3].getCanCoderNoOffset().getDegrees()
         });
 
         Logger.log("/SwerveDriveSubsystem/Drive Temperatures", getDriveTemperatures());
