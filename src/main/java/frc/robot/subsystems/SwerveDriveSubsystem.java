@@ -158,7 +158,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                             true);
                 })
                 .beforeStarting(() -> {
-                    omegaController.reset(null);
+                    omegaController.reset(new TrapezoidProfile.State(pose.getRotation().getRadians(), velocity.omegaRadiansPerSecond));
                 });
     }
 

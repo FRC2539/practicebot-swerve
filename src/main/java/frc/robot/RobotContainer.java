@@ -87,17 +87,15 @@ public class RobotContainer {
     }
 
     public double getDriveForwardAxis() {
-        return forwardRateLimiter.calculate(
+        return //forwardRateLimiter.calculate(
                 -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05))
-                        * Constants.SwerveConstants.maxSpeed
-                        * 0.85);
+                        * Constants.SwerveConstants.maxSpeed;//);
     }
 
     public double getDriveStrafeAxis() {
-        return strafeRateLimiter.calculate(
+        return //strafeRateLimiter.calculate(
                 -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05))
-                        * Constants.SwerveConstants.maxSpeed
-                        * 0.85);
+                        * Constants.SwerveConstants.maxSpeed;//);
     }
 
     public double getDriveRotationAxis() {
