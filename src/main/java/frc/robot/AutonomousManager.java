@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class AutonomousManager {
-    private static final AutonomousOption defaultAuto = AutonomousOption.STATION_PLACE1ANDCLIMB;
+    private static final AutonomousOption defaultAuto = AutonomousOption.BARREL_RUN;
 
     // Add tunables for all autonomous configuration options
     LoggedReceiver waitDuration;
@@ -47,8 +47,8 @@ public class AutonomousManager {
         autoBuilder = new SwerveAutoBuilder(
                 swerveDriveSubsystem::getPose,
                 swerveDriveSubsystem::setPose,
-                new PIDConstants(3.0, 0.0, 0.0),
-                new PIDConstants(1.2, 0.0, 0.001),
+                new PIDConstants(10.0, 0.0, 0.0),
+                new PIDConstants(7.0, 0.0, 0.001),
                 (ChassisSpeeds velocity) -> swerveDriveSubsystem.setVelocity(velocity, false, false),
                 eventMap,
                 true,
@@ -118,7 +118,8 @@ public class AutonomousManager {
         STATION_PLACE1ANDCLIMB(StartingLocation.STATION, 1, "station_place1andclimb", new PathConstraints(3, 2.25)),
         OPEN_PLACE1ANDTAXI(StartingLocation.OPEN, 1, "open_place1andtaxi", new PathConstraints(3, 3.25)),
         CABLE_PLACE1ANDTAXI(StartingLocation.CABLE, 1, "cable_place1andtaxi", new PathConstraints(2.85, 2.5)),
-        CIRCLE(StartingLocation.STATION, 2, "circle", new PathConstraints(2.75, 2.25));
+        CIRCLE(StartingLocation.STATION, 2, "circle", new PathConstraints(2.75, 2.25)),
+        BARREL_RUN(StartingLocation.STATION, 0, "fire_in_the_hole_run", new PathConstraints(6, 5));
         // CABLE_PLACE1ANDCLIMB(StartingLocation.CABLE, 1, "cable_place1andclimb", new PathConstraints(5, 5)),
         // CABLE_PLACE2(StartingLocation.CABLE, 2, "cable_place2", new PathConstraints(4, 3)),
         // CABLE_PLACE3(StartingLocation.CABLE, 3, "cable_place3", new PathConstraints(3.5, 3));
