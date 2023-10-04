@@ -42,6 +42,15 @@ public final class Constants {
         public static final double DRIVETRAIN_PERIOD = 0.0025;
     }
 
+    public static final class ShooterConstants {
+        public static final int rightShooterPort = 8;
+        public static final int leftShooterPort = 9;
+        public static final int rightPivotPort = 10;
+        public static final int leftPivotPort = 11;
+
+        public static final int encoderPort = 99;
+    }
+
     public static final class SwerveConstants extends DevelopmentBotConstants {}
 
     public static class CompBotConstants {
