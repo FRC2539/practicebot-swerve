@@ -24,6 +24,7 @@ public class RobotContainer {
     public static SlewRateLimiter strafeRateLimiter = new SlewRateLimiter(35, -35, 0);
 
     private final SwerveDriveSubsystem swerveDriveSubsystem = new SwerveDriveSubsystem();
+    private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
 
     public AutonomousManager autonomousManager;
 
@@ -38,6 +39,8 @@ public class RobotContainer {
         /* Set default commands */
         swerveDriveSubsystem.setDefaultCommand(swerveDriveSubsystem.driveCommand(
                 this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, true));
+        
+        shooterSubsystem.setDefaultCommand(shooterSubsystem.setDisabledCommand());
 
         /* Set left joystick bindings */
         leftDriveController.getLeftTopLeft().onTrue(runOnce(swerveDriveSubsystem::zeroRotation, swerveDriveSubsystem));
@@ -58,6 +61,10 @@ public class RobotContainer {
         rightDriveController.getRightBottomRight().whileTrue(swerveDriveSubsystem.characterizeCommand(true, false));
         rightDriveController.nameRightBottomMiddle("Characterize Forwards");
         rightDriveController.nameRightBottomMiddle("Characterize Backwards");
+        rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand());
+        rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand());
+        rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand());
+
 
         rightDriveController.sendButtonNamesToNT();
         leftDriveController.sendButtonNamesToNT();
