@@ -38,16 +38,9 @@ public class ShooterSubsystem extends SubsystemBase {
         pivotMotorRight.follow(pivotMotorLeft);
     }
 
-    public Command pivotForward(double speed) {
+    public void pivotMotor(double speed) {
         pivotMotorLeft.set(speed);
         pivotMotorRight.set(speed);
-        return null;
-    }
-
-    public Command pivotBackward(double speed) {
-        pivotMotorRight.set(speed*-1);
-        pivotMotorRight.set(speed*-1);
-        return null;
     }
 
     public void setShooterSpeeds(double speed) {
@@ -109,33 +102,33 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        switch (intakeMode) {
-            case DISABLED:
-                desiredPivotAngle = Math.PI / 2;
-                if(hasGamePiece()) {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
-                } else {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, 0);
-                }
-                break;
-            case INTAKE:
-                shooterMotorLeft.set(ControlMode.PercentOutput, 0.70);
-                break;
-            case HIGH:
-                desiredPivotAngle = 1.2;
-                shooterMotorLeft.set(ControlMode.PercentOutput, -0.90);
-                break;
-            case MID:
-                desiredPivotAngle = 1;
-                shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
-                break;
-            case LOW:
-                desiredPivotAngle = 0;
-                shooterMotorLeft.set(ControlMode.PercentOutput, -0.60);
-                break;
-        }
-        pivotMotorLeft.set(pivotAngleController.calculate(pivotEncoder.getAbsolutePosition(), desiredPivotAngle));
-
+        // switch (intakeMode) {
+        //     case DISABLED:
+        //         desiredPivotAngle = Math.PI / 2;
+        //         if(hasGamePiece()) {
+        //             shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
+        //         } else {
+        //             shooterMotorLeft.set(ControlMode.PercentOutput, 0);
+        //         }
+        //         break;
+        //     case INTAKE:
+        //         shooterMotorLeft.set(ControlMode.PercentOutput, 0.70);
+        //         break;
+        //     case HIGH:
+        //         desiredPivotAngle = 1.2;
+        //         shooterMotorLeft.set(ControlMode.PercentOutput, -0.90);
+        //         break;
+        //     case MID:
+        //         desiredPivotAngle = 1;
+        //         shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
+        //         break;
+        //     case LOW:
+        //         desiredPivotAngle = 0;
+        //         shooterMotorLeft.set(ControlMode.PercentOutput, -0.60);
+        //         break;
+        // }
+        // pivotMotorLeft.set(pivotAngleController.calculate(pivotEncoder.getAbsolutePosition(), desiredPivotAngle));
+            pivotMotor(20);
     }
 
     public enum IntakeMode {
