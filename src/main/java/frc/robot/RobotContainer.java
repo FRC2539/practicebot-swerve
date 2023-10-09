@@ -61,14 +61,16 @@ public class RobotContainer {
         rightDriveController.getRightBottomRight().whileTrue(swerveDriveSubsystem.characterizeCommand(true, false));
         rightDriveController.nameRightBottomMiddle("Characterize Forwards");
         rightDriveController.nameRightBottomMiddle("Characterize Backwards");
+
+        /* Set intaking joystick bindings */
         rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand());
         rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand());
         rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand());
-
-
-        rightDriveController.sendButtonNamesToNT();
-        leftDriveController.sendButtonNamesToNT();
-        operatorController.sendButtonNamesToNT();
+        rightDriveController.getTrigger().whileTrue(shooterSubsystem.intakeModeCommand());
+        rightDriveController.nameLeftThumb("Shoot High");
+        rightDriveController.nameRightThumb("Shoot Mid");
+        rightDriveController.nameBottomThumb("Shoot Low");
+        rightDriveController.nameTrigger("Intake");
 
         // Cardinal drive commands (inverted since the arm is on the back of the robot)
         rightDriveController
@@ -87,6 +89,10 @@ public class RobotContainer {
                 .getPOVLeft()
                 .whileTrue(swerveDriveSubsystem.cardinalCommand(
                         Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+
+        rightDriveController.sendButtonNamesToNT();
+        leftDriveController.sendButtonNamesToNT();
+        operatorController.sendButtonNamesToNT();
     }
 
     public Command getAutonomousCommand() {
