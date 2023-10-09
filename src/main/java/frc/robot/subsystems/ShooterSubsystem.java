@@ -38,6 +38,18 @@ public class ShooterSubsystem extends SubsystemBase {
         pivotMotorRight.follow(pivotMotorLeft);
     }
 
+    public Command pivotForward(double speed) {
+        pivotMotorLeft.set(speed);
+        pivotMotorRight.set(speed);
+        return null;
+    }
+
+    public Command pivotBackward(double speed) {
+        pivotMotorRight.set(speed*-1);
+        pivotMotorRight.set(speed*-1);
+        return null;
+    }
+
     public void setShooterSpeeds(double speed) {
         shooterMotorLeft.set(speed);
     }

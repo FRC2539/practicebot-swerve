@@ -36,57 +36,59 @@ public class RobotContainer {
 
     private void configureBindings() {
 
-        /* Set default commands */
-        swerveDriveSubsystem.setDefaultCommand(swerveDriveSubsystem.driveCommand(
-                this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, true));
+        // /* Set default commands */
+        // swerveDriveSubsystem.setDefaultCommand(swerveDriveSubsystem.driveCommand(
+        //         this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, true));
         
-        shooterSubsystem.setDefaultCommand(shooterSubsystem.setDisabledCommand());
+        // shooterSubsystem.setDefaultCommand(shooterSubsystem.setDisabledCommand());
 
-        /* Set left joystick bindings */
-        leftDriveController.getLeftTopLeft().onTrue(runOnce(swerveDriveSubsystem::zeroRotation, swerveDriveSubsystem));
-        leftDriveController
-                .getLeftTopRight()
-                .onTrue(runOnce(() -> swerveDriveSubsystem.setPose(new Pose2d()), swerveDriveSubsystem));
-        leftDriveController.nameLeftTopLeft("Reset Gyro Angle");
+        // /* Set left joystick bindings */
+        // leftDriveController.getLeftTopLeft().onTrue(runOnce(swerveDriveSubsystem::zeroRotation, swerveDriveSubsystem));
+        // leftDriveController
+        //         .getLeftTopRight()
+        //         .onTrue(runOnce(() -> swerveDriveSubsystem.setPose(new Pose2d()), swerveDriveSubsystem));
+        // leftDriveController.nameLeftTopLeft("Reset Gyro Angle");
 
-        // Leveling
-        leftDriveController.getLeftBottomLeft().toggleOnTrue(swerveDriveSubsystem.levelChargeStationCommandDestiny());
+        // // Leveling
+        // leftDriveController.getLeftBottomLeft().toggleOnTrue(swerveDriveSubsystem.levelChargeStationCommandDestiny());
 
-        leftDriveController.getLeftBottomMiddle().whileTrue(run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
-        leftDriveController.nameLeftBottomLeft("Level Charge Station");
-        leftDriveController.nameLeftBottomMiddle("Lock Wheels");
+        // leftDriveController.getLeftBottomMiddle().whileTrue(run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
+        // leftDriveController.nameLeftBottomLeft("Level Charge Station");
+        // leftDriveController.nameLeftBottomMiddle("Lock Wheels");
 
-        /* Set right joystick bindings */
-        rightDriveController.getRightBottomMiddle().whileTrue(swerveDriveSubsystem.characterizeCommand(true, true));
-        rightDriveController.getRightBottomRight().whileTrue(swerveDriveSubsystem.characterizeCommand(true, false));
-        rightDriveController.nameRightBottomMiddle("Characterize Forwards");
-        rightDriveController.nameRightBottomMiddle("Characterize Backwards");
-        rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand());
-        rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand());
-        rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand());
+        // /* Set right joystick bindings */
+        // rightDriveController.getRightBottomMiddle().whileTrue(swerveDriveSubsystem.characterizeCommand(true, true));
+        // rightDriveController.getRightBottomRight().whileTrue(swerveDriveSubsystem.characterizeCommand(true, false));
+        // rightDriveController.nameRightBottomMiddle("Characterize Forwards");
+        // rightDriveController.nameRightBottomMiddle("Characterize Backwards");
+        // rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand());
+        // rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand());
+        // rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand());
 
 
-        rightDriveController.sendButtonNamesToNT();
-        leftDriveController.sendButtonNamesToNT();
-        operatorController.sendButtonNamesToNT();
+        // rightDriveController.sendButtonNamesToNT();
+        // leftDriveController.sendButtonNamesToNT();
+        // operatorController.sendButtonNamesToNT();
 
-        // Cardinal drive commands (inverted since the arm is on the back of the robot)
-        rightDriveController
-                .getPOVUp()
-                .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(180), this::getDriveForwardAxis, this::getDriveStrafeAxis));
-        rightDriveController
-                .getPOVRight()
-                .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
-        rightDriveController
-                .getPOVDown()
-                .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(0), this::getDriveForwardAxis, this::getDriveStrafeAxis));
-        rightDriveController
-                .getPOVLeft()
-                .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        // // Cardinal drive commands (inverted since the arm is on the back of the robot)
+        // rightDriveController
+        //         .getPOVUp()
+        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
+        //                 Rotation2d.fromDegrees(180), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        // rightDriveController
+        //         .getPOVRight()
+        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
+        //                 Rotation2d.fromDegrees(90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        // rightDriveController
+        //         .getPOVDown()
+        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
+        //                 Rotation2d.fromDegrees(0), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        // rightDriveController
+        //         .getPOVLeft()
+        //         .whileTrue(swerveDriveSubsystem.cardinalCommand(
+        //                 Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+        operatorController.getA().onTrue(shooterSubsystem.pivotForward(15));
+        operatorController.getB().onTrue(shooterSubsystem.pivotBackward(15));
     }
 
     public Command getAutonomousCommand() {
