@@ -89,6 +89,7 @@ public class RobotContainer {
         //                 Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
         operatorController.getA().onTrue(shooterSubsystem.pivotForward(15));
         operatorController.getB().onTrue(shooterSubsystem.pivotBackward(15));
+
     }
 
     public Command getAutonomousCommand() {

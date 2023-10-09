@@ -112,9 +112,10 @@ public class ShooterSubsystem extends SubsystemBase {
         switch (intakeMode) {
             case DISABLED:
                 desiredPivotAngle = Math.PI / 2;
-                shooterMotorLeft.set(ControlMode.PercentOutput, 0);
                 if(hasGamePiece()) {
                     shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
+                } else {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0);
                 }
                 break;
             case INTAKE:
