@@ -38,9 +38,16 @@ public class ShooterSubsystem extends SubsystemBase {
         pivotMotorRight.follow(pivotMotorLeft);
     }
 
-    public void pivotMotor(double speed) {
+    public Command pivotForward(double speed) {
         pivotMotorLeft.set(speed);
         pivotMotorRight.set(speed);
+        return null;
+    }
+
+    public Command pivotBackward(double speed) {
+        pivotMotorRight.set(speed*-1);
+        pivotMotorRight.set(speed*-1);
+        return null;
     }
 
     public void setShooterSpeeds(double speed) {
@@ -102,6 +109,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+<<<<<<< HEAD
 
         switch (intakeMode) {
             case DISABLED:
@@ -109,6 +117,15 @@ public class ShooterSubsystem extends SubsystemBase {
                 shooterMotorLeft.set(ControlMode.PercentOutput, 0);
                 if(hasGamePiece()) {
                     shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
+=======
+        switch (intakeMode) {
+            case DISABLED:
+                desiredPivotAngle = Math.PI / 2;
+                if(hasGamePiece()) {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
+                } else {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0);
+>>>>>>> parent of 0ad1223 (simple)
                 }
                 break;
             case INTAKE:
