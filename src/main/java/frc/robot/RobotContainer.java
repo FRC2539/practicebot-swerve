@@ -36,25 +36,25 @@ public class RobotContainer {
 
     private void configureBindings() {
 
-        // /* Set default commands */
-        // swerveDriveSubsystem.setDefaultCommand(swerveDriveSubsystem.driveCommand(
-        //         this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, true));
+        /* Set default commands */
+        swerveDriveSubsystem.setDefaultCommand(swerveDriveSubsystem.driveCommand(
+                this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, true));
         
-        // shooterSubsystem.setDefaultCommand(shooterSubsystem.setDisabledCommand());
+        shooterSubsystem.setDefaultCommand(shooterSubsystem.setDisabledCommand());
 
-        // /* Set left joystick bindings */
-        // leftDriveController.getLeftTopLeft().onTrue(runOnce(swerveDriveSubsystem::zeroRotation, swerveDriveSubsystem));
-        // leftDriveController
-        //         .getLeftTopRight()
-        //         .onTrue(runOnce(() -> swerveDriveSubsystem.setPose(new Pose2d()), swerveDriveSubsystem));
-        // leftDriveController.nameLeftTopLeft("Reset Gyro Angle");
+        /* Set left joystick bindings */
+        leftDriveController.getLeftTopLeft().onTrue(runOnce(swerveDriveSubsystem::zeroRotation, swerveDriveSubsystem));
+        leftDriveController
+                .getLeftTopRight()
+                .onTrue(runOnce(() -> swerveDriveSubsystem.setPose(new Pose2d()), swerveDriveSubsystem));
+        leftDriveController.nameLeftTopLeft("Reset Gyro Angle");
 
-        // // Leveling
-        // leftDriveController.getLeftBottomLeft().toggleOnTrue(swerveDriveSubsystem.levelChargeStationCommandDestiny());
+        // Leveling
+        leftDriveController.getLeftBottomLeft().toggleOnTrue(swerveDriveSubsystem.levelChargeStationCommandDestiny());
 
-        // leftDriveController.getLeftBottomMiddle().whileTrue(run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
-        // leftDriveController.nameLeftBottomLeft("Level Charge Station");
-        // leftDriveController.nameLeftBottomMiddle("Lock Wheels");
+        leftDriveController.getLeftBottomMiddle().whileTrue(run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
+        leftDriveController.nameLeftBottomLeft("Level Charge Station");
+        leftDriveController.nameLeftBottomMiddle("Lock Wheels");
 
         /* Set right joystick bindings */
         rightDriveController.getRightBottomMiddle().whileTrue(swerveDriveSubsystem.characterizeCommand(true, true));
