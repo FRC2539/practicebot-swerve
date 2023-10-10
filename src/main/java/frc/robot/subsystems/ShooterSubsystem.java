@@ -102,33 +102,33 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // switch (intakeMode) {
-        //     case DISABLED:
-        //         desiredPivotAngle = Math.PI / 2;
-        //         if(hasGamePiece()) {
-        //             shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
-        //         } else {
-        //             shooterMotorLeft.set(ControlMode.PercentOutput, 0);
-        //         }
-        //         break;
-        //     case INTAKE:
-        //         shooterMotorLeft.set(ControlMode.PercentOutput, 0.70);
-        //         break;
-        //     case HIGH:
-        //         desiredPivotAngle = 1.2;
-        //         shooterMotorLeft.set(ControlMode.PercentOutput, -0.90);
-        //         break;
-        //     case MID:
-        //         desiredPivotAngle = 1;
-        //         shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
-        //         break;
-        //     case LOW:
-        //         desiredPivotAngle = 0;
-        //         shooterMotorLeft.set(ControlMode.PercentOutput, -0.60);
-        //         break;
-        // }
-        // pivotMotorLeft.set(pivotAngleController.calculate(pivotEncoder.getAbsolutePosition(), desiredPivotAngle));
-            pivotMotor(20);
+
+        switch (intakeMode) {
+            case DISABLED:
+                desiredPivotAngle = Math.PI / 2;
+                shooterMotorLeft.set(ControlMode.PercentOutput, 0);
+                if(hasGamePiece()) {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
+                }
+                break;
+            case INTAKE:
+                shooterMotorLeft.set(ControlMode.PercentOutput, 0.70);
+                break;
+            case HIGH:
+                desiredPivotAngle = 1.2;
+                shooterMotorLeft.set(ControlMode.PercentOutput, -0.90);
+                break;
+            case MID:
+                desiredPivotAngle = 1;
+                shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
+                break;
+            case LOW:
+                desiredPivotAngle = 0;
+                shooterMotorLeft.set(ControlMode.PercentOutput, -0.60);
+                break;
+        }
+        pivotMotorLeft.set(pivotAngleController.calculate(pivotEncoder.getAbsolutePosition(), desiredPivotAngle));
+
     }
 
     public enum IntakeMode {
