@@ -25,6 +25,7 @@ public class RobotContainer {
 
     private final SwerveDriveSubsystem swerveDriveSubsystem = new SwerveDriveSubsystem();
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
+    private final LightsSubsystem lightsSubsystem = new LightsSubsystem();
 
     public AutonomousManager autonomousManager;
 
@@ -63,14 +64,15 @@ public class RobotContainer {
         rightDriveController.nameRightBottomMiddle("Characterize Backwards");
 
         /* Set intaking joystick bindings */
-        rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand());
-        rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand());
-        rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand());
-        rightDriveController.getTrigger().whileTrue(shooterSubsystem.intakeModeCommand());
+        rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
+        rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
+        rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.65))));
+        rightDriveController.getTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.51))));
         rightDriveController.nameLeftThumb("Shoot High");
         rightDriveController.nameRightThumb("Shoot Mid");
         rightDriveController.nameBottomThumb("Shoot Low");
         rightDriveController.nameTrigger("Intake");
+        
 
         // Cardinal drive commands (inverted since the arm is on the back of the robot)
         rightDriveController

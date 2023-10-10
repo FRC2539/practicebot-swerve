@@ -22,7 +22,7 @@ public class ShooterSubsystem extends SubsystemBase {
     AnalogInput gamePieceSensor = new AnalogInput(ShooterConstants.shooterSensorPort);
 
     // values are currently extremely arbitrary
-    PIDController pivotAngleController = new PIDController(3, 0, 2);
+    PIDController pivotAngleController = new PIDController(20, 0, 0);
 
     double desiredPivotAngle = Math.PI / 2;
 
@@ -32,10 +32,12 @@ public class ShooterSubsystem extends SubsystemBase {
 
         shooterMotorRight.follow(shooterMotorLeft);
 
-        pivotMotorLeft.setInverted(false);
-        pivotMotorRight.setInverted(false);
+        pivotMotorLeft.setInverted(true);
+        pivotMotorRight.setInverted(true);
 
         pivotMotorRight.follow(pivotMotorLeft);
+
+        pivotAngleController.enableContinuousInput(0, 1);
     }
 
     public void setShooterSpeeds(double speed) {
@@ -99,7 +101,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public void periodic() {
         switch (intakeMode) {
             case DISABLED:
-                desiredPivotAngle = Math.PI / 2;
+                desiredPivotAngle = -.947 + 1.0/4;
                 if(hasGamePiece()) {
                     shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
                 } else {
@@ -108,21 +110,25 @@ public class ShooterSubsystem extends SubsystemBase {
                 break;
             case INTAKE:
                 shooterMotorLeft.set(ControlMode.PercentOutput, 0.70);
+                desiredPivotAngle = -.947 + 0;
                 break;
             case HIGH:
-                desiredPivotAngle = 1.2;
+                desiredPivotAngle = 1.0/5 - .947;
                 shooterMotorLeft.set(ControlMode.PercentOutput, -0.90);
                 break;
             case MID:
-                desiredPivotAngle = 1;
+                desiredPivotAngle = -.947 + 1.0 / 8;
                 shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
                 break;
             case LOW:
-                desiredPivotAngle = 0;
+                desiredPivotAngle = -.947;
                 shooterMotorLeft.set(ControlMode.PercentOutput, -0.60);
                 break;
         }
-        pivotMotorLeft.set(pivotAngleController.calculate(pivotEncoder.getAbsolutePosition(), desiredPivotAngle));
+        double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.0497), desiredPivotAngle);
+        pivotMotorLeft.set(outputUsed);
+        // pivotMotorLeft.set(desiredPivotAngle);
+        System.out.println(outputUsed);
 
     }
 
