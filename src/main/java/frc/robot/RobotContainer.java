@@ -64,14 +64,28 @@ public class RobotContainer {
         rightDriveController.nameRightBottomMiddle("Characterize Backwards");
 
         /* Set intaking joystick bindings */
-        rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
-        rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
-        rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.65))));
-        rightDriveController.getTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.51))));
-        rightDriveController.nameLeftThumb("Shoot High");
-        rightDriveController.nameRightThumb("Shoot Mid");
-        rightDriveController.nameBottomThumb("Shoot Low");
-        rightDriveController.nameTrigger("Intake");
+        // rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
+        // rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
+        // rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.65))));
+        // rightDriveController.getTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.51))));
+        // rightDriveController.nameLeftThumb("Shoot High");
+        // rightDriveController.nameRightThumb("Shoot Mid");
+        // rightDriveController.nameBottomThumb("Shoot Low");
+        // rightDriveController.nameTrigger("Intake");
+
+        /* Set operator controller bindings */
+        operatorController.getY().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
+        operatorController.getB().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
+        operatorController.getA().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.65))));
+        operatorController.getX().whileTrue(run(shooterSubsystem::bringIntakeUpright, shooterSubsystem));
+        operatorController.getRightTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.51))));
+        operatorController.nameY("Shoot High");
+        operatorController.nameB("Shoot Mid");
+        operatorController.nameA("Shoot Low");
+        operatorController.nameRightTrigger("Intake");
+
+
+        
         
 
         // Cardinal drive commands (inverted since the arm is on the back of the robot)

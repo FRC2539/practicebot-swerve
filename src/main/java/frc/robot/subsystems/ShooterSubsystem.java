@@ -22,9 +22,9 @@ public class ShooterSubsystem extends SubsystemBase {
     AnalogInput gamePieceSensor = new AnalogInput(ShooterConstants.shooterSensorPort);
 
     // values are currently extremely arbitrary
-    PIDController pivotAngleController = new PIDController(20, 0, 0);
+    PIDController pivotAngleController = new PIDController(5, 0, 0);
 
-    double desiredPivotAngle = Math.PI / 2;
+    double desiredPivotAngle;
 
     public ShooterSubsystem() {
         shooterMotorLeft.setInverted(false);
@@ -38,6 +38,7 @@ public class ShooterSubsystem extends SubsystemBase {
         pivotMotorRight.follow(pivotMotorLeft);
 
         pivotAngleController.enableContinuousInput(0, 1);
+        pivotAngleController.setTolerance(0.025);
     }
 
     public void setShooterSpeeds(double speed) {
@@ -55,7 +56,13 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setIntakeMode(IntakeMode intakeMode) {
         this.intakeMode = intakeMode;
     }
-
+    
+    public void bringIntakeUpright() {
+        desiredPivotAngle = 0.25;
+        double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.0497), desiredPivotAngle);
+        pivotMotorLeft.set(outputUsed);
+    }
+    
     public Command setDisabledCommand() {
         return startEnd(
                 () -> {
@@ -69,8 +76,7 @@ public class ShooterSubsystem extends SubsystemBase {
                         () -> {
                             setIntakeMode(IntakeMode.INTAKE);
                         },
-                        () -> {})
-                .until(this::hasGamePiece);
+                        () -> {});
     }
 
     public Command shootHighCommand() {
@@ -101,28 +107,40 @@ public class ShooterSubsystem extends SubsystemBase {
     public void periodic() {
         switch (intakeMode) {
             case DISABLED:
-                desiredPivotAngle = -.947 + 1.0/4;
+                desiredPivotAngle = -.947 + 1.0 / 6;
                 if(hasGamePiece()) {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.07);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
                 } else {
                     shooterMotorLeft.set(ControlMode.PercentOutput, 0);
                 }
                 break;
             case INTAKE:
-                shooterMotorLeft.set(ControlMode.PercentOutput, 0.70);
-                desiredPivotAngle = -.947 + 0;
+                desiredPivotAngle = -.947 - 0.027777778;
+                shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
                 break;
             case HIGH:
-                desiredPivotAngle = 1.0/5 - .947;
-                shooterMotorLeft.set(ControlMode.PercentOutput, -0.90);
+                desiredPivotAngle = -.947 + 1.0 / 5;
+                if(pivotAngleController.atSetpoint()) {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.80);
+                } else {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                }
                 break;
             case MID:
-                desiredPivotAngle = -.947 + 1.0 / 8;
-                shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
+                desiredPivotAngle = -.947 + 1.0 / 9;
+                if(pivotAngleController.atSetpoint()) {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.90);
+                } else {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                }
                 break;
             case LOW:
                 desiredPivotAngle = -.947;
-                shooterMotorLeft.set(ControlMode.PercentOutput, -0.60);
+                if(pivotAngleController.atSetpoint()) {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.60);
+                } else {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                }
                 break;
         }
         double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.0497), desiredPivotAngle);
