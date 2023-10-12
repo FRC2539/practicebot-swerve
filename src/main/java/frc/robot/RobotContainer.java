@@ -77,7 +77,10 @@ public class RobotContainer {
         operatorController.getY().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
         operatorController.getB().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
         operatorController.getA().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.65))));
-        operatorController.getX().whileTrue(run(shooterSubsystem::bringIntakeUpright, shooterSubsystem));
+        operatorController.getRightBumper().whileTrue(shooterSubsystem.shootChargingStation().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
+        operatorController.getX().toggleOnTrue(shooterSubsystem.setUprightCommand());
+        
+        // operatorController.getX().whileTrue(run(shooterSubsystem::bringIntakeUpright, shooterSubsystem));
         operatorController.getRightTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.51))));
         operatorController.nameY("Shoot High");
         operatorController.nameB("Shoot Mid");
@@ -149,5 +152,9 @@ public class RobotContainer {
 
     public SwerveDriveSubsystem getSwerveDriveSubsystem() {
         return swerveDriveSubsystem;
+    }
+
+    public ShooterSubsystem getShooterSubsystem() {
+        return shooterSubsystem;
     }
 }

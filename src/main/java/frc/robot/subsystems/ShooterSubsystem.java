@@ -56,11 +56,13 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setIntakeMode(IntakeMode intakeMode) {
         this.intakeMode = intakeMode;
     }
-    
-    public void bringIntakeUpright() {
-        desiredPivotAngle = 0.25;
-        double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.0497), desiredPivotAngle);
-        pivotMotorLeft.set(outputUsed);
+
+    public Command setUprightCommand() {
+        return startEnd(
+                () -> {
+                    setIntakeMode(IntakeMode.STRAIGHT_UP);
+                },
+                () -> {});
     }
     
     public Command setDisabledCommand() {
@@ -95,6 +97,14 @@ public class ShooterSubsystem extends SubsystemBase {
                 () -> {});
     }
 
+    public Command shootChargingStation() {
+        return startEnd(
+                () -> {
+                    setIntakeMode(IntakeMode.CHARGINGSTATION);
+                },
+                () -> {});
+    }
+
     public Command shootLowCommand() {
         return startEnd(
                 () -> {
@@ -111,12 +121,20 @@ public class ShooterSubsystem extends SubsystemBase {
                 if(hasGamePiece()) {
                     shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
                 } else {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, 0);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -.07);
                 }
                 break;
             case INTAKE:
-                desiredPivotAngle = -.947 - 0.027777778;
+                desiredPivotAngle = -.947 - 0.047777778;//0.027777778
                 shooterMotorLeft.set(ControlMode.PercentOutput, -0.70);
+                break;
+            case CHARGINGSTATION:
+                desiredPivotAngle = -.947 + 1.0 / 9; //across charging station
+                if(pivotAngleController.atSetpoint()) {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 1); //across charging station
+                } else {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                }
                 break;
             case HIGH:
                 desiredPivotAngle = -.947 + 1.0 / 5;
@@ -127,20 +145,25 @@ public class ShooterSubsystem extends SubsystemBase {
                 }
                 break;
             case MID:
-                desiredPivotAngle = -.947 + 1.0 / 9;
+
+                desiredPivotAngle = -.947 + 1.0 / 5; //mid
                 if(pivotAngleController.atSetpoint()) {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.90);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.45); //mid
                 } else {
                     shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
                 }
                 break;
             case LOW:
                 desiredPivotAngle = -.947;
-                if(pivotAngleController.atSetpoint()) {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.60);
-                } else {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
-                }
+                //if(pivotAngleController.atSetpoint()) {
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.20);
+                //} else {
+                //    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                //}
+                break;
+            case STRAIGHT_UP:
+                desiredPivotAngle = .25 + -.947;
+                shooterMotorLeft.set(ControlMode.PercentOutput, 0.0);
                 break;
         }
         double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.0497), desiredPivotAngle);
@@ -153,8 +176,10 @@ public class ShooterSubsystem extends SubsystemBase {
     public enum IntakeMode {
         DISABLED,
         INTAKE,
+        CHARGINGSTATION,
         HIGH,
         MID,
-        LOW
+        LOW,
+        STRAIGHT_UP
     }
 }
