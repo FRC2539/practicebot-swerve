@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class AutonomousManager {
-    private static final AutonomousOption defaultAuto = AutonomousOption.BARREL_RUN;
+    private static final AutonomousOption defaultAuto = AutonomousOption.STATION_PLACE1ANDCLIMB;
 
     // Add tunables for all autonomous configuration options
     LoggedReceiver waitDuration;
@@ -46,7 +46,7 @@ public class AutonomousManager {
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("levelChargeStation", swerveDriveSubsystem.levelChargeStationCommandDestiny());
         eventMap.put("lock", run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
-        eventMap.put("shootHigh", shooterSubsystem.shootHighCommand().withTimeout(2));
+        eventMap.put("shootHigh", shooterSubsystem.intakeModeCommand().withTimeout(0.5).andThen(shooterSubsystem.shootHighCommand().withTimeout(2).andThen(shooterSubsystem.setDisabledCommand().withTimeout(0.1))));
         eventMap.put("intake", shooterSubsystem.intakeModeCommand().withTimeout(2));
 
         autoBuilder = new SwerveAutoBuilder(

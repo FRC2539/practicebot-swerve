@@ -95,19 +95,19 @@ public class RobotContainer {
         rightDriveController
                 .getPOVUp()
                 .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(180), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+                        Rotation2d.fromDegrees(0), this::getDriveForwardAxis, this::getDriveStrafeAxis));
         rightDriveController
                 .getPOVRight()
                 .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+                        Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
         rightDriveController
                 .getPOVDown()
                 .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(0), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+                        Rotation2d.fromDegrees(180), this::getDriveForwardAxis, this::getDriveStrafeAxis));
         rightDriveController
                 .getPOVLeft()
                 .whileTrue(swerveDriveSubsystem.cardinalCommand(
-                        Rotation2d.fromDegrees(-90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
+                        Rotation2d.fromDegrees(90), this::getDriveForwardAxis, this::getDriveStrafeAxis));
 
         rightDriveController.sendButtonNamesToNT();
         leftDriveController.sendButtonNamesToNT();

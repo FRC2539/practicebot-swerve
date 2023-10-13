@@ -187,7 +187,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     double speed = tiltController.calculate(tilt, 0);
                     if (speed >= levelingMaxSpeed) speed = levelingMaxSpeed;
 
-                    speed *= (isGoingSlower.thing ? 0.5 : 1);
+                    speed *= (isGoingSlower.thing ? 0.65 : 1);
 
                     Translation2d finalDirection = direction.times(speed);
 
@@ -197,7 +197,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     sketchyBoi.thing -= 0.02;
 
                     if (tiltController.atSetpoint()
-                            || Math.abs(getTiltRate()) >= Math.toDegrees(angleRateThresholdReceiver.getDouble())) {
+                            || Math.abs(getTiltRate()) >= Math.toDegrees(0.5)) {//angleRateThresholdReceiver.getDouble())) {
                         sketchyBoi.thing = 0.5;
                         isGoingSlower.thing = true;
                     }
@@ -215,7 +215,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     myFavoriteTimer.reset();
                     isLevelingAuto = true;
                     sketchyBoi.thing = 0.0;
-                    var values = pidValueReciever.getDoubleArray();
+                    var values = new double[]{0.8 / 15, 0, .01, 8, 0.8};
                     if (values.length < 5) return;
                     tiltController.setPID(values[0], values[1], values[2]);
                     tiltController.setTolerance(values[3]);
