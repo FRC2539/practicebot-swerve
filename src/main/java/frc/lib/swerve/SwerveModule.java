@@ -109,13 +109,13 @@ public class SwerveModule {
     }
 
     public void setDesiredAngleOnly(Rotation2d desiredAngle, boolean optimized) {
-        // Set the module to face forwards
-        if (optimized) {
+         // Set the module to face forwards
+         if (optimized) {
             desiredAngle = CTREModuleState.optimize(new SwerveModuleState(1, desiredAngle), getState().angle).angle;
         }
 
         angleMotor.setControl(positionVoltageRequestAngle.withPosition(
-                desiredAngle.getRadians()/360).withFeedForward(0));
+                desiredAngle.getRotations()).withFeedForward(0));
 
         lastAngle = 0;
 
