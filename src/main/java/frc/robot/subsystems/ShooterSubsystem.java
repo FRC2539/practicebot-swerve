@@ -128,7 +128,7 @@ public class ShooterSubsystem extends SubsystemBase {
         double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.0497), desiredPivotAngle);
         pivotMotorLeft.set(outputUsed);
         // pivotMotorLeft.set(desiredPivotAngle);
-        System.out.println(outputUsed);
+        System.out.println(pivotEncoder.getAbsolutePosition());
 
     }
 
