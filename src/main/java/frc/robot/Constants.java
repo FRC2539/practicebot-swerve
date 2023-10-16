@@ -48,7 +48,7 @@ public final class Constants {
         public static final int rightPivotPort = 10;
         public static final int leftPivotPort = 11;
 
-        public static final int encoderPort = 0;
+        public static final int encoderPort = 1;
 
         public static final int shooterSensorPort = 1;
     }

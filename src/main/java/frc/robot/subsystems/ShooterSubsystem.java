@@ -26,6 +26,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     double desiredPivotAngle;
 
+    int i = 0;
+
     public ShooterSubsystem() {
         shooterMotorLeft.setInverted(false);
         shooterMotorRight.setInverted(true);
@@ -38,7 +40,7 @@ public class ShooterSubsystem extends SubsystemBase {
         pivotMotorRight.follow(pivotMotorLeft);
 
         pivotAngleController.enableContinuousInput(0, 1);
-        pivotAngleController.setTolerance(0.025);
+        pivotAngleController.setTolerance(0.035);
     }
 
     public void setShooterSpeeds(double speed) {
@@ -119,9 +121,9 @@ public class ShooterSubsystem extends SubsystemBase {
             case DISABLED:
                 desiredPivotAngle = -.947 + 1.0 / 6;
                 if(hasGamePiece()) {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.14);
                 } else {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, -.07);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.14);
                 }
                 break;
             case INTAKE:
@@ -133,7 +135,7 @@ public class ShooterSubsystem extends SubsystemBase {
                 if(pivotAngleController.atSetpoint()) {
                     shooterMotorLeft.set(ControlMode.PercentOutput, 1); //across charging station
                 } else {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.14);
                 }
                 break;
             case HIGH:
@@ -141,7 +143,7 @@ public class ShooterSubsystem extends SubsystemBase {
                 if(pivotAngleController.atSetpoint()) {
                     shooterMotorLeft.set(ControlMode.PercentOutput, 0.80);
                 } else {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.14);
                 }
                 break;
             case MID:
@@ -150,15 +152,15 @@ public class ShooterSubsystem extends SubsystemBase {
                 if(pivotAngleController.atSetpoint()) {
                     shooterMotorLeft.set(ControlMode.PercentOutput, 0.45); //mid
                 } else {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, -0.14);
                 }
                 break;
             case LOW:
                 desiredPivotAngle = -.947;
                 //if(pivotAngleController.atSetpoint()) {
-                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.20);
+                    shooterMotorLeft.set(ControlMode.PercentOutput, 0.35);
                 //} else {
-                //    shooterMotorLeft.set(ControlMode.PercentOutput, -0.07);
+                //    shooterMotorLeft.set(ControlMode.PercentOutput, -0.14);
                 //}
                 break;
             case STRAIGHT_UP:
@@ -166,11 +168,19 @@ public class ShooterSubsystem extends SubsystemBase {
                 shooterMotorLeft.set(ControlMode.PercentOutput, 0.0);
                 break;
         }
-        double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.0497), desiredPivotAngle);
+        double outputUsed = pivotAngleController.calculate(-(pivotEncoder.getAbsolutePosition() - 0.715), desiredPivotAngle);
+        if (outputUsed > 0) {
+            outputUsed += .10;
+        } else {
+            outputUsed -= .10;
+        }
         pivotMotorLeft.set(outputUsed);
         // pivotMotorLeft.set(desiredPivotAngle);
-        System.out.println(pivotEncoder.getAbsolutePosition());
-
+        if (i == 0) {
+            System.out.println(pivotEncoder.getAbsolutePosition());
+        }
+        i++;
+        i %= 20;
     }
 
     public enum IntakeMode {
