@@ -46,7 +46,15 @@ public class AutonomousManager {
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("levelChargeStation", swerveDriveSubsystem.levelChargeStationCommandDestiny());
         eventMap.put("lock", run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
-        eventMap.put("shootHigh", shooterSubsystem.intakeModeCommand().withTimeout(0.5).andThen(shooterSubsystem.shootHighCommand().withTimeout(2).andThen(shooterSubsystem.setDisabledCommand().withTimeout(0.1))));
+        eventMap.put(
+                "shootHigh",
+                shooterSubsystem
+                        .intakeModeCommand()
+                        .withTimeout(0.5)
+                        .andThen(shooterSubsystem
+                                .shootHighCommand()
+                                .withTimeout(2)
+                                .andThen(shooterSubsystem.setDisabledCommand().withTimeout(0.1))));
         eventMap.put("intake", shooterSubsystem.intakeModeCommand().withTimeout(2));
 
         autoBuilder = new SwerveAutoBuilder(

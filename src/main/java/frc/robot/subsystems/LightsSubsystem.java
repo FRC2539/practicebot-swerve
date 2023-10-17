@@ -18,7 +18,7 @@ public class LightsSubsystem extends SubsystemBase {
 
     public static Pattern rainbow = new Pattern(-0.45);
     public static Pattern redFade = new Pattern(-0.17);
-    
+
     public LightsSubsystem() {
         setDefaultCommand(defaultCommand());
     }

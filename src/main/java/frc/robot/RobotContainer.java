@@ -4,6 +4,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -12,7 +13,6 @@ import frc.lib.controller.ThrustmasterJoystick;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.CubeAlignment;
 import frc.robot.subsystems.*;
-import edu.wpi.first.math.geometry.Rotation2d;
 
 public class RobotContainer {
     private final ThrustmasterJoystick leftDriveController =
@@ -43,7 +43,7 @@ public class RobotContainer {
         /* Set default commands */
         swerveDriveSubsystem.setDefaultCommand(swerveDriveSubsystem.driveCommand(
                 this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, true));
-        
+
         shooterSubsystem.setDefaultCommand(shooterSubsystem.setDisabledCommand());
 
         /* Set left joystick bindings */
@@ -66,17 +66,29 @@ public class RobotContainer {
         rightDriveController.nameRightBottomMiddle("Characterize Forwards");
         rightDriveController.nameRightBottomMiddle("Characterize Backwards");
 
-        var cubeAlignment = new CubeAlignment(swerveDriveSubsystem, visionSubsystem, lightsSubsystem, this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, () -> false, true);
+        var cubeAlignment = new CubeAlignment(
+                swerveDriveSubsystem,
+                visionSubsystem,
+                lightsSubsystem,
+                this::getDriveForwardAxis,
+                this::getDriveStrafeAxis,
+                this::getDriveRotationAxis,
+                () -> false,
+                true);
         rightDriveController.getTrigger().whileTrue(cubeAlignment);
         leftDriveController.getTrigger().whileTrue(cubeAlignment);
         rightDriveController.nameTrigger("Auto Align");
         leftDriveController.nameTrigger("Auto Align");
 
         /* Set intaking joystick bindings */
-        // rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
-        // rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
-        // rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.65))));
-        // rightDriveController.getTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.51))));
+        // rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() ->
+        // lightsSubsystem.setLEDS(-.99))));
+        // rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() ->
+        // lightsSubsystem.setLEDS(.35))));
+        // rightDriveController.getBottomThumb().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() ->
+        // lightsSubsystem.setLEDS(.65))));
+        // rightDriveController.getTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() ->
+        // lightsSubsystem.setLEDS(.51))));
         // rightDriveController.nameLeftThumb("Shoot High");
         // rightDriveController.nameRightThumb("Shoot Mid");
         // rightDriveController.nameBottomThumb("Shoot Low");
@@ -88,7 +100,7 @@ public class RobotContainer {
         operatorController.getA().whileTrue(shooterSubsystem.shootLowCommand());
         operatorController.getRightBumper().whileTrue(shooterSubsystem.shootChargingStation());
         operatorController.getX().toggleOnTrue(shooterSubsystem.setUprightCommand());
-        
+
         // operatorController.getX().whileTrue(run(shooterSubsystem::bringIntakeUpright, shooterSubsystem));
         operatorController.getRightTrigger().whileTrue(shooterSubsystem.intakeModeCommand());
         operatorController.nameY("Shoot High");
@@ -96,9 +108,8 @@ public class RobotContainer {
         operatorController.nameA("Shoot Low");
         operatorController.nameRightTrigger("Intake");
 
-
-        new Trigger(() -> swerveDriveSubsystem.isRainbow).whileTrue(lightsSubsystem.patternCommand(LightsSubsystem.rainbow));
-        
+        new Trigger(() -> swerveDriveSubsystem.isRainbow)
+                .whileTrue(lightsSubsystem.patternCommand(LightsSubsystem.rainbow));
 
         // Cardinal drive commands (inverted since the arm is on the back of the robot)
         rightDriveController
@@ -128,15 +139,13 @@ public class RobotContainer {
     }
 
     public double getDriveForwardAxis() {
-        return //forwardRateLimiter.calculate(
-                -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05))
-                        * Constants.SwerveConstants.maxSpeed;//);
+        return // forwardRateLimiter.calculate(
+        -square(deadband(leftDriveController.getYAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed; // );
     }
 
     public double getDriveStrafeAxis() {
-        return //strafeRateLimiter.calculate(
-                -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05))
-                        * Constants.SwerveConstants.maxSpeed;//);
+        return // strafeRateLimiter.calculate(
+        -square(deadband(leftDriveController.getXAxis().getRaw(), 0.05)) * Constants.SwerveConstants.maxSpeed; // );
     }
 
     public double getDriveRotationAxis() {

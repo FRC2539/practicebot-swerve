@@ -3,17 +3,16 @@ package frc.robot.commands;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.lib.logging.LoggedReceiver;
 import frc.lib.logging.Logger;
 import frc.lib.math.MathUtils;
-import frc.lib.vision.BackLimelight;
-import frc.lib.vision.LimelightRawAngles;
 import frc.lib.vision.CameraInterfaces.Retroreflective;
+import frc.lib.vision.LimelightRawAngles;
 import frc.robot.subsystems.LightsSubsystem;
 import frc.robot.subsystems.SwerveDriveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -41,8 +40,8 @@ public class CubeAlignment extends CommandBase {
     private ProfiledPIDController angleController = new ProfiledPIDController(1.5, 0.0, 0.0, angleConstraints);
     private PIDController strafeController = new PIDController(0.05, 0.0, 0.1);
 
-    //this order is {kP rot, kI rot, kD rot, kP horiz, kI horiz, kD horiz, speed rot, accel rot}
-    private double[] configValues = new double[]{6,0.0,0.0,0.15,0.0,0.0,4.0,4.0};
+    // this order is {kP rot, kI rot, kD rot, kP horiz, kI horiz, kD horiz, speed rot, accel rot}
+    private double[] configValues = new double[] {6, 0.0, 0.0, 0.15, 0.0, 0.0, 4.0, 4.0};
 
     private Retroreflective camera;
 
@@ -75,19 +74,23 @@ public class CubeAlignment extends CommandBase {
         strafeController.setSetpoint(0);
 
         camera = visionSubsystem.getLimelight();
-    
-        //this order is {kP rot, kI rot, kD rot, kP horiz, kI horiz, kD horiz, speed rot, accel rot}
+
+        // this order is {kP rot, kI rot, kD rot, kP horiz, kI horiz, kD horiz, speed rot, accel rot}
         pidValueReciever = Logger.tunable("/LLAimCommand/pid_values", configValues);
         this.isUsingNetPID = isUsingNetPID;
     }
 
     @Override
-    public void initialize() { 
+    public void initialize() {
         double[] someValues = pidValueReciever.getDoubleArray();
 
         if (someValues.length != 8 || !isUsingNetPID) someValues = configValues;
 
-        angleController = new ProfiledPIDController(someValues[0],someValues[1],someValues[2], new TrapezoidProfile.Constraints(someValues[6], someValues[7]));
+        angleController = new ProfiledPIDController(
+                someValues[0],
+                someValues[1],
+                someValues[2],
+                new TrapezoidProfile.Constraints(someValues[6], someValues[7]));
 
         angleController.setGoal(0);
         angleController.enableContinuousInput(-Math.PI, Math.PI);
@@ -111,8 +114,7 @@ public class CubeAlignment extends CommandBase {
     public void execute() {
         // var allVisionAngles = visionSubsystem.getBackAllRetroreflectiveAngles();
 
-        if (camera.hasLimelightRawAngles()
-                && atAngle) {
+        if (camera.hasLimelightRawAngles() && atAngle) {
 
             LimelightRawAngles bestCurrentTarget =
                     camera.getLimelightRawAngles().get(); // allVisionAngles.get(0);
@@ -126,10 +128,12 @@ public class CubeAlignment extends CommandBase {
                 Logger.log("/LLAimCommand/tx", bestCurrentTarget.tx());
 
                 strafeingValue = -MathUtils.ensureRange(
-                        deadband(strafeSlewer.calculate(strafeController.calculate(bestCurrentTarget.tx()))), -maxStrafeVelocity, maxStrafeVelocity);
+                        deadband(strafeSlewer.calculate(strafeController.calculate(bestCurrentTarget.tx()))),
+                        -maxStrafeVelocity,
+                        maxStrafeVelocity);
 
                 if (strafeController.atSetpoint()) strafeingValue = 0;
-                
+
                 if (Math.abs(strafeController.getPositionError()) <= 2.0) {
                     lightsSubsystem.setPattern(LightsSubsystem.green);
                 } else {
@@ -149,7 +153,7 @@ public class CubeAlignment extends CommandBase {
                 swerveDriveSubsystem.getPose().getRotation().getRadians());
         double angularSpeed = angleController.getSetpoint().velocity + angularCorrection;
         if (angleController.atGoal()) {
-            //angularSpeed = 0;
+            // angularSpeed = 0;
             atAngle = true;
         }
 

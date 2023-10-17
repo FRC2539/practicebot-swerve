@@ -26,6 +26,7 @@ import frc.lib.gyro.NavXGyro;
 import frc.lib.interpolation.MovingAverageVelocity;
 import frc.lib.logging.LoggedReceiver;
 import frc.lib.logging.Logger;
+import frc.lib.math.MathUtils;
 import frc.lib.swerve.SwerveDriveSignal;
 import frc.lib.swerve.SwerveModule;
 import frc.robot.Constants;
@@ -37,7 +38,6 @@ import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.DoubleStream;
-import frc.lib.math.MathUtils;
 
 public class SwerveDriveSubsystem extends SubsystemBase {
     private final SwerveDrivePoseEstimator swervePoseEstimator;
@@ -75,7 +75,6 @@ public class SwerveDriveSubsystem extends SubsystemBase {
     private ProfiledPIDController omegaController =
             new ProfiledPIDController(5, 0, 0, new TrapezoidProfile.Constraints(8, 8));
     private final double maxCardinalVelocity = 4.5;
-    
 
     private double previousTilt = 0;
     private double tiltRate = 0;
@@ -137,7 +136,8 @@ public class SwerveDriveSubsystem extends SubsystemBase {
     //     omegaController.enableContinuousInput(-Math.PI, Math.PI);
 
     //     return run(() -> {
-    //         var rotationVelocity = omegaController.calculate(pose.getRotation().getRadians(), targetAngle.getRadians());
+    //         var rotationVelocity = omegaController.calculate(pose.getRotation().getRadians(),
+    // targetAngle.getRadians());
 
     //         setVelocity(new ChassisSpeeds(forward.getAsDouble(), strafe.getAsDouble(), rotationVelocity), true);
     //     });
@@ -159,7 +159,8 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                             true);
                 })
                 .beforeStarting(() -> {
-                    omegaController.reset(new TrapezoidProfile.State(pose.getRotation().getRadians(), velocity.omegaRadiansPerSecond));
+                    omegaController.reset(new TrapezoidProfile.State(
+                            pose.getRotation().getRadians(), velocity.omegaRadiansPerSecond));
                 });
     }
 
@@ -199,7 +200,8 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     sketchyBoi.thing -= 0.02;
 
                     if (tiltController.atSetpoint()
-                            || Math.abs(getTiltRate()) >= Math.toDegrees(0.5)) {//angleRateThresholdReceiver.getDouble())) {
+                            || Math.abs(getTiltRate())
+                                    >= Math.toDegrees(0.5)) { // angleRateThresholdReceiver.getDouble())) {
                         sketchyBoi.thing = 0.5;
                         isGoingSlower.thing = true;
                     }
@@ -218,7 +220,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     myFavoriteTimer.reset();
                     isLevelingAuto = true;
                     sketchyBoi.thing = 0.0;
-                    var values = new double[]{0.8 / 15, 0, .01, 8, 0.8};
+                    var values = new double[] {0.8 / 15, 0, .01, 8, 0.8};
                     if (values.length < 5) return;
                     tiltController.setPID(values[0], values[1], values[2]);
                     tiltController.setTolerance(values[3]);
