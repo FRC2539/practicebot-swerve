@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.controller.LogitechController;
 import frc.lib.controller.ThrustmasterJoystick;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.commands.CubeAlignment;
 import frc.robot.subsystems.*;
 import edu.wpi.first.math.geometry.Rotation2d;
 
@@ -26,6 +27,7 @@ public class RobotContainer {
     private final SwerveDriveSubsystem swerveDriveSubsystem = new SwerveDriveSubsystem();
     private final ShooterSubsystem shooterSubsystem = new ShooterSubsystem();
     private final LightsSubsystem lightsSubsystem = new LightsSubsystem();
+    private final VisionSubsystem visionSubsystem = new VisionSubsystem();
 
     public AutonomousManager autonomousManager;
 
@@ -63,6 +65,12 @@ public class RobotContainer {
         rightDriveController.nameRightBottomMiddle("Characterize Forwards");
         rightDriveController.nameRightBottomMiddle("Characterize Backwards");
 
+        var cubeAlignment = new CubeAlignment(swerveDriveSubsystem, visionSubsystem, lightsSubsystem, this::getDriveForwardAxis, this::getDriveStrafeAxis, this::getDriveRotationAxis, () -> false, true);
+        rightDriveController.getTrigger().whileTrue(cubeAlignment);
+        leftDriveController.getTrigger().whileTrue(cubeAlignment);
+        rightDriveController.nameTrigger("Auto Align");
+        leftDriveController.nameTrigger("Auto Align");
+
         /* Set intaking joystick bindings */
         // rightDriveController.getLeftThumb().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
         // rightDriveController.getRightThumb().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
@@ -74,14 +82,14 @@ public class RobotContainer {
         // rightDriveController.nameTrigger("Intake");
 
         /* Set operator controller bindings */
-        operatorController.getY().whileTrue(shooterSubsystem.shootHighCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(-.99))));
-        operatorController.getB().whileTrue(shooterSubsystem.shootMidCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
-        operatorController.getA().whileTrue(shooterSubsystem.shootLowCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.65))));
-        operatorController.getRightBumper().whileTrue(shooterSubsystem.shootChargingStation().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.35))));
+        operatorController.getY().whileTrue(shooterSubsystem.shootHighCommand());
+        operatorController.getB().whileTrue(shooterSubsystem.shootMidCommand());
+        operatorController.getA().whileTrue(shooterSubsystem.shootLowCommand());
+        operatorController.getRightBumper().whileTrue(shooterSubsystem.shootChargingStation());
         operatorController.getX().toggleOnTrue(shooterSubsystem.setUprightCommand());
         
         // operatorController.getX().whileTrue(run(shooterSubsystem::bringIntakeUpright, shooterSubsystem));
-        operatorController.getRightTrigger().whileTrue(shooterSubsystem.intakeModeCommand().alongWith(runOnce(() -> lightsSubsystem.setLEDS(.51))));
+        operatorController.getRightTrigger().whileTrue(shooterSubsystem.intakeModeCommand());
         operatorController.nameY("Shoot High");
         operatorController.nameB("Shoot Mid");
         operatorController.nameA("Shoot Low");
@@ -156,5 +164,13 @@ public class RobotContainer {
 
     public ShooterSubsystem getShooterSubsystem() {
         return shooterSubsystem;
+    }
+
+    public LightsSubsystem getLightsSubsystem() {
+        return lightsSubsystem;
+    }
+
+    public VisionSubsystem getVisionSubsystem() {
+        return visionSubsystem;
     }
 }
