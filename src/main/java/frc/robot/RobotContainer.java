@@ -6,6 +6,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.controller.LogitechController;
 import frc.lib.controller.ThrustmasterJoystick;
 import frc.robot.Constants.ControllerConstants;
@@ -96,7 +97,7 @@ public class RobotContainer {
         operatorController.nameRightTrigger("Intake");
 
 
-        
+        new Trigger(() -> swerveDriveSubsystem.isRainbow).whileTrue(lightsSubsystem.patternCommand(LightsSubsystem.rainbow));
         
 
         // Cardinal drive commands (inverted since the arm is on the back of the robot)

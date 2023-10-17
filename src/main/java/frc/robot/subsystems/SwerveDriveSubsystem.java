@@ -57,6 +57,8 @@ public class SwerveDriveSubsystem extends SubsystemBase {
 
     private boolean isLevelingAuto = false;
 
+    public boolean isRainbow = false;
+
     private SwerveModule[] modules;
 
     private GenericGyro gyro;
@@ -205,6 +207,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                     if (sketchyBoi.thing > 0) {
                         myFavoriteTimer.start();
                         lock();
+                        isRainbow = true;
                     } else {
                         setVelocity(velocity, false);
                         myFavoriteTimer.stop();
@@ -224,6 +227,7 @@ public class SwerveDriveSubsystem extends SubsystemBase {
                 .finallyDo((interrupted) -> {
                     tiltController.reset();
                     isLevelingAuto = false;
+                    isRainbow = false;
                 });
         // return run(() -> {
         //             double tilt = getTiltAmountInDegrees();
