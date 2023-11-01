@@ -12,4 +12,8 @@ public class VisionSubsystem extends SubsystemBase {
     public Retroreflective getLimelight() {
         return aprilTagCamera;
     }
+
+    public void periodic() {
+        aprilTagCamera.update();
+    }
 }

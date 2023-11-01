@@ -41,7 +41,7 @@ public class CubeAlignment extends CommandBase {
     private PIDController strafeController = new PIDController(0.05, 0.0, 0.1);
 
     // this order is {kP rot, kI rot, kD rot, kP horiz, kI horiz, kD horiz, speed rot, accel rot}
-    private double[] configValues = new double[] {6, 0.0, 0.0, 0.15, 0.0, 0.0, 4.0, 4.0};
+    private double[] configValues = new double[] {6, 0.0, 0.0, 0.05, 0.0, 0.0, 4.0, 4.0};
 
     private Retroreflective camera;
 
@@ -49,6 +49,8 @@ public class CubeAlignment extends CommandBase {
     private boolean isUsingNetPID;
 
     private double howCloseGotten;
+
+    private int i = 0;
 
     public CubeAlignment(
             SwerveDriveSubsystem swerveDriveSubsystem,
@@ -92,7 +94,7 @@ public class CubeAlignment extends CommandBase {
                 someValues[2],
                 new TrapezoidProfile.Constraints(someValues[6], someValues[7]));
 
-        angleController.setGoal(0);
+        angleController.setGoal(Math.PI);
         angleController.enableContinuousInput(-Math.PI, Math.PI);
         angleController.setTolerance(Math.toRadians(3));
 
@@ -113,6 +115,11 @@ public class CubeAlignment extends CommandBase {
     @Override
     public void execute() {
         // var allVisionAngles = visionSubsystem.getBackAllRetroreflectiveAngles();
+        if (i == 0) {
+            System.out.println(camera.hasLimelightRawAngles());
+        }
+        i++;
+        i %= 20;
 
         if (camera.hasLimelightRawAngles() && atAngle) {
 

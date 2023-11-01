@@ -48,13 +48,9 @@ public class AutonomousManager {
         eventMap.put("lock", run(swerveDriveSubsystem::lock, swerveDriveSubsystem));
         eventMap.put(
                 "shootHigh",
-                shooterSubsystem
-                        .intakeModeCommand()
-                        .withTimeout(0.5)
-                        .andThen(shooterSubsystem
-                                .shootHighCommand()
+                shooterSubsystem.shootHighCommand()
                                 .withTimeout(2)
-                                .andThen(shooterSubsystem.setDisabledCommand().withTimeout(0.1))));
+                                .andThen(shooterSubsystem.setDisabledCommand().withTimeout(0.1)));
         eventMap.put("intake", shooterSubsystem.intakeModeCommand().withTimeout(2));
 
         autoBuilder = new SwerveAutoBuilder(
@@ -130,9 +126,9 @@ public class AutonomousManager {
         // OPEN_PLACE3(StartingLocation.OPEN, 3, "open_place3", new PathConstraints(4, 4)),
         STATION_PLACE1ANDCLIMB(StartingLocation.STATION, 1, "station_place1andclimb", new PathConstraints(3, 2.25)),
         OPEN_PLACE1ANDTAXI(StartingLocation.OPEN, 1, "open_place1andtaxi", new PathConstraints(3, 3.25)),
-        CABLE_PLACE1ANDTAXI(StartingLocation.CABLE, 1, "cable_place1andtaxi", new PathConstraints(2.85, 2.5)),
-        CIRCLE(StartingLocation.STATION, 2, "circle", new PathConstraints(2.75, 2.25)),
-        BARREL_RUN(StartingLocation.STATION, 0, "fire_in_the_hole_run", new PathConstraints(6, 5));
+        CABLE_PLACE1ANDTAXI(StartingLocation.CABLE, 1, "cable_place1andtaxi", new PathConstraints(2.85, 2.5));
+        // CIRCLE(StartingLocation.STATION, 2, "circle", new PathConstraints(2.75, 2.25)),
+        // BARREL_RUN(StartingLocation.STATION, 0, "fire_in_the_hole_run", new PathConstraints(6, 5));
         // CABLE_PLACE1ANDCLIMB(StartingLocation.CABLE, 1, "cable_place1andclimb", new PathConstraints(5, 5)),
         // CABLE_PLACE2(StartingLocation.CABLE, 2, "cable_place2", new PathConstraints(4, 3)),
         // CABLE_PLACE3(StartingLocation.CABLE, 3, "cable_place3", new PathConstraints(3.5, 3));

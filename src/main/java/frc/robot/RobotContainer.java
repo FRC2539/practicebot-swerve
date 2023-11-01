@@ -2,6 +2,8 @@ package frc.robot;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
+import java.util.Optional;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -100,6 +102,7 @@ public class RobotContainer {
         operatorController.getA().whileTrue(shooterSubsystem.shootLowCommand());
         operatorController.getRightBumper().whileTrue(shooterSubsystem.shootChargingStation());
         operatorController.getX().toggleOnTrue(shooterSubsystem.setUprightCommand());
+        operatorController.getLeftBumper().whileTrue(runEnd(() -> shooterSubsystem.speedOverride = Optional.of(.30), () -> shooterSubsystem.speedOverride = Optional.empty()));
 
         // operatorController.getX().whileTrue(run(shooterSubsystem::bringIntakeUpright, shooterSubsystem));
         operatorController.getRightTrigger().whileTrue(shooterSubsystem.intakeModeCommand());
